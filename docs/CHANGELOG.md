@@ -4,6 +4,12 @@
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
+2026-09-01 | v1.0.0 / 0010 | 版本号升级 1.0.0（首个正式版） | 全局
+
+- package.json / tauri.conf.json / Cargo.toml 版本号统一升至 1.0.0
+
+- 功能全量：文件夹视频清单、SQLite 进度记忆续播、四种播放模式、倍速 0.50-2.00 记忆、键盘按住加速、系统音量双向同步、关窗不退应用
+
 2026-09-01 | v0.2.6 / 0009 | 修复：点 X 无法关闭窗口；改为关窗不退应用 | 前端/Rust
 
 - 根因：onCloseRequested 中 win.destroy() 缺少 core:window:allow-destroy 权限被拒，preventDefault 后窗口卡住

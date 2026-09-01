@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>playerWCY</title>
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 左侧：文件夹导航 -->
+    <aside id="sidebar">
+      <button id="btn-open-folder" title="选择视频文件夹">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>打开文件夹</span>
+      </button>
+      <div id="folder-name" class="folder-name">未打开文件夹</div>
+      <ul id="video-list"></ul>
+    </aside>
+
+    <!-- 主区：播放器 -->
+    <main id="main">
+      <div id="video-wrap">
+        <video id="player"></video>
+        <div id="empty-tip">
+          <p>打开文件夹后，点击左侧视频开始播放</p>
+          <p class="tip-keys">空格 暂停/播放 ｜ ←/→ 快退/快进 5 秒（按住加速）</p>
+        </div>
+      </div>
+
+      <!-- 控制栏 -->
+      <div id="controls">
+        <div id="progress-row">
+          <span id="time-cur" class="time">00:00</span>
+          <input type="range" id="seek-bar" min="0" max="1000" value="0" step="1" />
+          <span id="time-dur" class="time">00:00</span>
+        </div>
+        <div id="btn-row">
+          <div class="btn-group">
+            <button id="btn-back" title="快退 5 秒">
+              <svg viewBox="0 0 24 24"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
+              <span>5s</span>
+            </button>
+            <button id="btn-play" title="播放/暂停（空格）"></button>
+            <button id="btn-fwd" title="快进 5 秒">
+              <span>5s</span>
+              <svg viewBox="0 0 24 24"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
+            </button>
+            <button id="btn-mode" title="点击切换播放模式：播完下集 → 列表循环 → 单集循环 → 播完暂停"></button>
+          </div>
+          <div class="btn-group speed-group">
+            <span class="label">倍速</span>
+            <button class="btn-rate" data-rate="0.5">0.5x</button>
+            <button class="btn-rate" data-rate="1">1x</button>
+            <button class="btn-rate" data-rate="1.5">1.5x</button>
+            <button class="btn-rate" data-rate="2">2x</button>
+            <input type="text" id="rate-input" placeholder="1.65" maxlength="4"
+                   title="输入 0.50 - 2.00 之间的倍速" />
+          </div>
+          <div class="btn-group volume-group">
+            <span class="label" title="音量（与系统音量同步）">
+              <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            </span>
+            <input type="range" id="volume" min="0" max="100" value="100" />
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

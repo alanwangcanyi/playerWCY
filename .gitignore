@@ -1,0 +1,7 @@
+node_modules/
+src-tauri/target/
+src-tauri/gen/schemas/
+.DS_Store
+*.log.tmp
+# 编译归档产物为二进制，不入库（本地保留）
+20260901-playerWCY-archive/

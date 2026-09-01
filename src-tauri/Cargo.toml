@@ -1,0 +1,28 @@
+[package]
+name = "playerwcy"
+version = "0.1.0"
+description = "playerWCY 视频播放器（macOS）"
+authors = ["wcy"]
+edition = "2021"
+
+[lib]
+name = "playerwcy_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# SQLite 静态编译进二进制（bundled），无需系统安装 SQLite
+rusqlite = { version = "0.32", features = ["bundled"] }
+# macOS CoreAudio 底层绑定：系统音量读写与监听
+coreaudio-sys = "0.2"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

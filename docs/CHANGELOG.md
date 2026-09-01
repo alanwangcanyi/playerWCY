@@ -4,6 +4,20 @@
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
+2026-09-01 | v0.2.6 / 0009 | 修复：点 X 无法关闭窗口；改为关窗不退应用 | 前端/Rust
+
+- 根因：onCloseRequested 中 win.destroy() 缺少 core:window:allow-destroy 权限被拒，preventDefault 后窗口卡住
+
+- 行为改为 macOS 标准：点 X 保存进度后隐藏窗口（应用留驻 Dock 不退出），点击 Dock 图标恢复窗口（RunEvent::Reopen）
+
+- capabilities 增加 core:window:allow-hide
+
+2026-09-01 | v0.2.5 / 0008 | 优化：应用图标改版 | 图标/脚本
+
+- 图标设计改为：白色底 + 黑色圆角边框 + 中心黑色线条描边（白色填充）播放三角，与界面线条图标风格一致
+
+- gen\_icons.sh 改为 2048 超采样渲染后 sips 缩小，边线更平滑；GitHub 开源准备（MIT LICENSE、copyright、公开仓库）
+
 2026-09-01 | v0.2.4 / 0007 | 修复：审查问题 4-9；新增 Rust 单元测试 | 前端/Rust/文档
 
 - 关窗进度丢失：save() 改为返回 Promise，onCloseRequested 中 await 后再销毁窗口

@@ -31,6 +31,17 @@ pub fn run() {
             commands::get_system_volume,
             commands::set_system_volume
         ])
-        .run(tauri::generate_context!())
-        .expect("playerWCY 启动失败");
+        .build(tauri::generate_context!())
+        .expect("playerWCY 启动失败")
+        .run(|_app, _event| {
+            // macOS：点 X 后窗口仅隐藏（应用留驻 Dock）；点击 Dock 图标时恢复主窗口
+            #[cfg(target_os = "macos")]
+            {
+                if let tauri::RunEvent::Reopen { .. } = _event {
+                    if let Some(win) = _app.get_webview_window("main") {
+                        let _ = win.show();
+                    }
+                }
+            }
+        });
 }

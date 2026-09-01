@@ -156,12 +156,12 @@ export function initPlayer(ctx) {
     setRate(Math.round(v * 100) / 100);
   });
 
-  // 窗口关闭前保存进度（等待写入完成再销毁，避免丢失最后一次进度）
+  // 点 X 关窗：保存进度后隐藏窗口（应用留驻 Dock 不退出；点 Dock 图标恢复窗口）
   const win = getCurrentWindow();
   win.onCloseRequested(async (event) => {
     event.preventDefault();
     await save(true);
-    await win.destroy();
+    await win.hide();
   });
 
   return {

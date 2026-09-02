@@ -104,14 +104,16 @@ export function initPlayer(ctx) {
       return;
     }
     if (mode === 'stop') return; // 播完暂停：停住
-    // 播完下集 / 列表循环：切下一集
-    const nextIdx = ctx.activeIndex + 1;
-    if (nextIdx < ctx.items.length) {
-      ctx.playAt(nextIdx);
-    } else if (mode === 'list-loop' && ctx.items.length > 0) {
-      ctx.playAt(0); // 列表循环：末尾回到第一集
+    // 播完下集 / 列表循环：在当前文件夹内切下一集
+    const g = ctx.groups[ctx.activeGroup];
+    if (!g) return;
+    const nextIdx = ctx.activeIdx + 1;
+    if (nextIdx < g.videos.length) {
+      ctx.playAt(ctx.activeGroup, nextIdx);
+    } else if (mode === 'list-loop' && g.videos.length > 0) {
+      ctx.playAt(ctx.activeGroup, 0); // 列表循环：末尾回到本组第一集
     }
-    // 'next' 到末尾：停住
+    // 'next' 到组末尾：停住
   });
 
   /* ---- 界面操作 ---- */
@@ -169,6 +171,12 @@ export function initPlayer(ctx) {
     togglePlay,
     seekBy,
     setRate,
+    /** 停止进度跟踪：记录被删除时调用，避免继续播放把记录"复活" */
+    stopTracking() {
+      current = null;
+      pendingResume = null;
+      video.pause();
+    },
     onProgress(cb) {
       progressCb = cb;
     },

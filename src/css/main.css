@@ -58,14 +58,66 @@ body {
 
 #video-list { flex: 1; overflow-y: auto; list-style: none; padding: 8px; }
 
+/* ===== 文件夹分组树 ===== */
+.folder-group { margin-bottom: 4px; }
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.group-header:hover { background: var(--bg-hover); color: var(--text); }
+.group-header .chev { display: inline-flex; }
+.group-header .chev svg {
+  width: 14px; height: 14px;
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  transition: transform 0.15s ease;
+}
+.folder-group.collapsed .chev svg { transform: rotate(0deg); }
+.folder-group:not(.collapsed) .chev svg { transform: rotate(90deg); }
+
+.group-header .gname {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.group-header .gcount { font-size: 11px; opacity: 0.7; }
+
+.folder-group .group-videos { list-style: none; display: block; }
+.folder-group.collapsed .group-videos { display: none; }
+
+/* ===== 视频条目（含悬停勾选框） ===== */
 .video-item {
-  padding: 8px 10px;
+  position: relative;
+  padding: 8px 10px 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   margin-bottom: 4px;
 }
 .video-item:hover { background: var(--bg-hover); }
 .video-item.active { background: var(--brand-weak); }
+.video-item.checked { background: rgba(111, 111, 255, 0.10); }
+
+.video-item .chk {
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  cursor: pointer;
+  line-height: 1;
+}
+.video-item:hover .chk,
+.video-item.checked .chk { opacity: 1; }
+.video-item .chk input { accent-color: var(--brand); width: 14px; height: 14px; cursor: pointer; }
 
 .video-item .name {
   font-size: 13px;
@@ -99,6 +151,36 @@ body {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+/* ===== 底部多选操作条 ===== */
+.sel-bar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+.sel-bar button { flex: 1; }
+.sel-bar .danger { color: #ff8a80; border-color: rgba(232, 70, 58, 0.4); }
+
+/* ===== 右键菜单 ===== */
+.ctx-menu {
+  position: fixed;
+  z-index: 999;
+  min-width: 220px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.ctx-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ctx-item:hover { background: var(--bg-hover); }
 
 /* ===== 主区播放器 ===== */
 #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }

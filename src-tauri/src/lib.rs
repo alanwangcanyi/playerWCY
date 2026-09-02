@@ -27,6 +27,9 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::scan_folder,
+            commands::list_library,
+            commands::remove_folder,
+            commands::remove_videos,
             commands::save_progress,
             commands::get_system_volume,
             commands::set_system_volume

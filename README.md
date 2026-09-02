@@ -76,7 +76,8 @@ bash scripts/gen_icons.sh   # 重新生成图标（改图标设计时用）
 
 | 功能                        | 位置                                                         |
 | ------------------------- | ---------------------------------------------------------- |
-| 打开文件夹 + 视频清单 + 进度%        | src/js/sidebar.js ↔ src-tauri/src/folder.rs                |
+| 打开文件夹 + 视频清单 + 进度% | src/js/sidebar.js ↔ src-tauri/src/folder.rs（扫描入库，刷新语义） |
+| 文件夹历史（重启保留）+ 删除记录 + 分组折叠 | SQLite folders/videos 表 ↔ src-tauri/src/db.rs ↔ src/js/sidebar.js（右键菜单/悬停勾选多选，仅删记录不删文件） |
 | 播放进度记忆（SQLite）            | src/js/player.js（节流保存）↔ src-tauri/src/db.rs                |
 | 左右键快进快退、按住加速              | src/js/keyboard.js（步长档位 5→8→12→20s）                        |
 | 倍速 0.50-2.00 两位小数         | src/js/player.js setRate()                                 |

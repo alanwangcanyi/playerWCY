@@ -4,85 +4,71 @@
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
+2026-09-02 | v1.1.0 / 0011 | 新增：文件夹历史 + 删除记录 + 分组折叠 | Rust/前端/DB
+
+- 文件夹历史：新增 folders 表（videos 表零改动），打开过的文件夹持久保存，重启后仍在；旧数据自动迁移（从 videos.folder_path 去重生成）
+- 启动纯读 SQLite 记录（不扫磁盘）：文件被移动后记录保留，播放失败时提示可删记录
+- 打开文件夹 = 刷新语义：扫描结果入库（新增 INSERT OR IGNORE 不覆盖已有进度），已删除的记录保留
+- 删除记录（不删磁盘文件）：右键视频条目删单条；右键组头删整个文件夹（级联删其下视频记录）；悬停勾选框多选（可跨文件夹）+ 底部"删除所选"按钮；均有确认弹窗
+- 侧栏改分组树：文件夹组头（名称+数量+折叠箭头）可收起/展开，折叠状态按路径记忆（localStorage）
+- 连播范围限定当前文件夹内（播完下集/列表循环均在组内）；ctx 改 groups 结构
+
+2026-09-01 | v1.0.0 / 0010 | 版本号升级 1.0.0（首个正式版） | 全局
+
+- package.json / tauri.conf.json / Cargo.toml 版本号统一升至 1.0.0
+- 功能全量：文件夹视频清单、SQLite 进度记忆续播、四种播放模式、倍速 0.50-2.00 记忆、键盘按住加速、系统音量双向同步、关窗不退应用
+
 2026-09-01 | v0.2.6 / 0009 | 修复：点 X 无法关闭窗口；改为关窗不退应用 | 前端/Rust
 
 - 根因：onCloseRequested 中 win.destroy() 缺少 core:window:allow-destroy 权限被拒，preventDefault 后窗口卡住
-
 - 行为改为 macOS 标准：点 X 保存进度后隐藏窗口（应用留驻 Dock 不退出），点击 Dock 图标恢复窗口（RunEvent::Reopen）
-
 - capabilities 增加 core:window:allow-hide
 
 2026-09-01 | v0.2.5 / 0008 | 优化：应用图标改版 | 图标/脚本
 
 - 图标设计改为：白色底 + 黑色圆角边框 + 中心黑色线条描边（白色填充）播放三角，与界面线条图标风格一致
-
-- gen\_icons.sh 改为 2048 超采样渲染后 sips 缩小，边线更平滑；GitHub 开源准备（MIT LICENSE、copyright、公开仓库）
+- gen_icons.sh 改为 2048 超采样渲染后 sips 缩小，边线更平滑；GitHub 开源准备（MIT LICENSE、copyright、公开仓库）
 
 2026-09-01 | v0.2.4 / 0007 | 修复：审查问题 4-9；新增 Rust 单元测试 | 前端/Rust/文档
 
 - 关窗进度丢失：save() 改为返回 Promise，onCloseRequested 中 await 后再销毁窗口
-
 - 静默吞错：进度保存/音量读写三处空 catch 改为 console.error 输出
-
 - 进度百分比统一 clamp 0-100（db.rs / commands.rs / sidebar.js）
-
-- scan\_folder：目录读取失败返回错误信息（前端显示），不再与"无视频"混淆；路径非目录时报错
-
+- scan_folder：目录读取失败返回错误信息（前端显示），不再与"无视频"混淆；路径非目录时报错
 - folder.rs 注释修正：如实说明为小写字典序（非数字感知自然排序）
-
 - 文档一致性：ARCHITECTURE.md 更新为 4 个 IPC 命令，补播放模式流程与 pendingResume 续播时序
-
 - 新增 cargo test 单元测试 5 项（db 进度 roundtrip / percent clamp / 扩展名过滤 / 错误路径 / 排序）
-
 - 审查 #10（音量监听句柄）评估后不修改：桌面应用无窗口重载场景，进程退出系统自动回收
 
 2026-09-01 | v0.2.3 / 0006 | 修复：player.js 三处修改丢失（编辑竞态） | 前端
 
 - 用户审查发现并由全文核验确认：listen 未导入（初始化中断）、ended 播放模式逻辑缺失、续播仍在换源后立即设置 currentTime（不可靠）
-
 - 根因：多轮并行编辑同一文件互相覆盖；修复方式为整体重写 player.js 并全文核验
-
 - 流程改进：同一文件多处修改必须串行或整体重写；修改后必须全文验证而非局部抽查
 
 2026-09-01 | v0.2.2 / 0005 | 优化：按钮图标线条化 | 前端界面
 
 - 快进/快退/音量/播放/暂停/播放模式/打开文件夹按钮图标全部由 emoji 改为线条风格内联 SVG（Lucide 风格，stroke=currentColor，随主题变色）
-
 - 播放/暂停、播放模式按钮图标由 JS 动态切换 SVG
 
 2026-09-01 | v0.2.1 / 0004 | 新增：音量条同步系统音量、倍速记忆 | Rust/前端
 
 - 音量条改为系统音量镜像：CoreAudio（coreaudio-sys）读写默认输出设备音量并监听变化，系统快捷键调音量时软件音量条实时跟随，拖动软件音量条同步改系统音量；软件内不再衰减 video.volume（恒为 1.0）
-
 - 倍速记忆：调整后存 localStorage，重启/换源后自动重应用（换源后 playbackRate 会被重置，改为 loadedmetadata 时应用）
-
 - 附带修复：续播位置改为 loadedmetadata 时应用，避免换源后被重置
 
 2026-09-01 | v0.2.0 / 0003 | 新增：四种播放模式 + log 工作流 | 前端/脚本/文档
 
-- 播放模式（控制栏按钮循环切换，localStorage 记忆上次选择，默认"播完下集"）：
-
-  - 列表循环：播完切下一集，末尾回到第一集
-
-  - 单集循环：播完重播本集
-
-  - 播完暂停：播完本集停住
-
-  - 播完下集：顺序播放，末尾停住
-
+- 播放模式（控制栏按钮循环切换，localStorage 记忆上次选择，默认"播完下集"）：列表循环 / 单集循环 / 播完暂停 / 播完下集
 - log 工作流：log/ 目录 + 每日日志（YYYYMMDD.log），改动前写"进行"、完成后改"完成"；archive.sh 归档后自动写 log
 
 2026-09-01 | v0.1.1 / 0002 | 修复：点击"打开文件夹"无反应 | 前端模块加载
 
-- 根因：无 bundler 的 vanilla 前端不能使用 `import from '@tauri-apps/...'` 裸模块名，浏览器解析失败导致 main.js 整体未加载，所有按钮事件未绑定
-
-- 修复：tauri.conf.json 启用 `app.withGlobalTauri`，前端（sidebar.js / player.js）改用 `window.__TAURI__` 全局 API（core/dialog/window），逻辑不变
+- 根因：无 bundler 的 vanilla 前端不能使用 import from '@tauri-apps/...' 裸模块名，浏览器解析失败导致 main.js 整体未加载，所有按钮事件未绑定
+- 修复：tauri.conf.json 启用 app.withGlobalTauri，前端（sidebar.js / player.js）改用 window.__TAURI__ 全局 API，逻辑不变
 
 2026-09-01 | v0.1.0 / 0001 | 初始版本 | 全部
 
 - 项目创建：Tauri 2 架构（Rust 后端 + 原生 JS 前端）
-
 - 功能：打开文件夹视频清单、SQLite 播放进度记忆与续播、左右键快进快退（按住加速）、空格暂停、0.50-2.00 两位小数倍速、界面按钮操作
-
 - 基础设施：README/文档体系、图标生成脚本、归档脚本（20260901-playerWCY-archive）
-

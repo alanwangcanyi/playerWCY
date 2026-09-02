@@ -8,14 +8,17 @@
 </head>
 <body>
   <div id="app">
-    <!-- 左侧：文件夹导航 -->
+    <!-- 左侧：文件夹导航（分组树 + 多选删除） -->
     <aside id="sidebar">
-      <button id="btn-open-folder" title="选择视频文件夹">
+      <button id="btn-open-folder" title="选择视频文件夹（添加/刷新）">
         <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
         <span>打开文件夹</span>
       </button>
-      <div id="folder-name" class="folder-name">未打开文件夹</div>
       <ul id="video-list"></ul>
+      <div id="sel-bar" class="sel-bar" hidden>
+        <button id="btn-del-sel" class="danger">删除所选 (<span id="sel-count">0</span>)</button>
+        <button id="btn-cancel-sel">取消</button>
+      </div>
     </aside>
 
     <!-- 主区：播放器 -->
@@ -67,6 +70,7 @@
       </div>
     </main>
   </div>
+  <div id="ctx-menu" class="ctx-menu" hidden></div>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

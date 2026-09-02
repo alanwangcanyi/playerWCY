@@ -139,3 +139,18 @@ pub fn get_system_volume() -> f32 {
 pub fn set_system_volume(volume: f64) {
     volume::set_system_volume(volume as f32);
 }
+
+/// 在 Finder 中显示文件（macOS open -R：打开访达并定位选中该文件）
+#[tauri::command]
+pub fn reveal_in_finder(file_path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&file_path);
+    if !path.exists() {
+        return Err(format!("文件不存在，可能已被移动或删除：{}", file_path));
+    }
+    std::process::Command::new("open")
+        .arg("-R")
+        .arg(&file_path)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("打开 Finder 失败: {}", e))
+}

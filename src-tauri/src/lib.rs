@@ -32,7 +32,8 @@ pub fn run() {
             commands::remove_videos,
             commands::save_progress,
             commands::get_system_volume,
-            commands::set_system_volume
+            commands::set_system_volume,
+            commands::reveal_in_finder
         ])
         .build(tauri::generate_context!())
         .expect("playerWCY 启动失败")

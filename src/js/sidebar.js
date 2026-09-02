@@ -95,6 +95,13 @@ export function initSidebar(videoApi, ctx) {
     if (item) {
       showMenu(menuEl, e, [
         {
+          label: '在 Finder 中显示',
+          action: () =>
+            invoke('reveal_in_finder', { filePath: item.dataset.path }).catch((err) =>
+              alert(err)
+            ),
+        },
+        {
           label: '删除此条记录（不删文件）',
           action: () => deleteVideos(ctx, listEl, [item.dataset.path], videoApi, selBar, selCount),
         },

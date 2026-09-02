@@ -17,3 +17,23 @@ const ctx = {
 const videoApi = initPlayer(ctx);
 initSidebar(videoApi, ctx);
 initKeyboard(videoApi);
+
+/* ---- 侧栏收起/展开按钮（视频区左上角，悬停放大移开缩小，状态记忆） ---- */
+const ICONS_TOGGLE = {
+  left: '<svg viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>',
+  right: '<svg viewBox="0 0 24 24"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>',
+};
+const btnToggle = document.getElementById('btn-toggle-sidebar');
+const appEl = document.getElementById('app');
+
+function applySidebar(hidden) {
+  appEl.classList.toggle('sidebar-hidden', hidden);
+  btnToggle.innerHTML = hidden ? ICONS_TOGGLE.right : ICONS_TOGGLE.left;
+}
+
+btnToggle.addEventListener('click', () => {
+  const hidden = !appEl.classList.contains('sidebar-hidden');
+  localStorage.setItem('pwcy-sidebar-hidden', hidden ? '1' : '0');
+  applySidebar(hidden);
+});
+applySidebar(localStorage.getItem('pwcy-sidebar-hidden') === '1');

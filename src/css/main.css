@@ -104,7 +104,7 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-#video-list { flex: 1; overflow-y: auto; list-style: none; padding: 8px; }
+#video-list { flex: 1; overflow-y: auto; list-style: none; padding: 8px; min-height: 0; }
 
 /* ===== 文件夹分组树 ===== */
 .folder-group { margin-bottom: 4px; }

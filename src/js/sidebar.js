@@ -128,14 +128,7 @@ export function initSidebar(videoApi, ctx) {
       .then(() => updateSelBar(selBar, selCount))
       .catch((e) => alert('删除失败: ' + e));
   });
-  document.getElementById('btn-cancel-sel').addEventListener('click', () => {
-    selected.clear();
-    listEl.querySelectorAll('.video-item.checked').forEach((el) => {
-      el.classList.remove('checked');
-      el.querySelector('input').checked = false;
-    });
-    updateSelBar(selBar, selCount);
-  });
+  document.getElementById('btn-cancel-sel').addEventListener('click', clearSelection);
 
   // 播放进度变化时，同步更新对应条目显示（按 path 定位，跨组通用）
   videoApi.onProgress((filePath, position, duration) => {
@@ -313,6 +306,21 @@ function stopIfPlaying(ctx, videoApi, paths) {
     ctx.activeGroup = -1;
     ctx.activeIdx = -1;
   }
+}
+
+/** 清空多选（收起侧栏时也调用：退出多选模式，避免勾选状态悬空） */
+export function clearSelection() {
+  selected.clear();
+  const listEl = document.getElementById('video-list');
+  const selBar = document.getElementById('sel-bar');
+  const selCount = document.getElementById('sel-count');
+  if (!listEl) return;
+  listEl.querySelectorAll('.video-item.checked').forEach((el) => {
+    el.classList.remove('checked');
+    const input = el.querySelector('input');
+    if (input) input.checked = false;
+  });
+  updateSelBar(selBar, selCount);
 }
 
 /** CSS 选择器转义（路径含特殊字符时安全） */

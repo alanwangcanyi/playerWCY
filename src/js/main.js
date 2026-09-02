@@ -3,7 +3,7 @@
 //   groups      文件夹分组 [{path, name, videos: []}]（来源 SQLite，持久）
 //   activeGroup / activeIdx  当前播放位置（连播范围 = 当前文件夹内）
 //   playAt(g, i)  按分组索引播放（由 sidebar.js 填充）
-import { initSidebar } from './sidebar.js';
+import { initSidebar, clearSelection } from './sidebar.js';
 import { initPlayer } from './player.js';
 import { initKeyboard } from './keyboard.js';
 
@@ -29,6 +29,8 @@ const appEl = document.getElementById('app');
 function applySidebar(hidden) {
   appEl.classList.toggle('sidebar-hidden', hidden);
   btnToggle.innerHTML = hidden ? ICONS_TOGGLE.right : ICONS_TOGGLE.left;
+  // 收起侧栏 = 退出多选模式，避免"删除所选"操作条不可达但勾选仍悬空
+  if (hidden) clearSelection();
 }
 
 btnToggle.addEventListener('click', () => {

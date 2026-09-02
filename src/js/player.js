@@ -62,6 +62,7 @@ export function initPlayer(ctx) {
 
   /* ---- 视频事件 ---- */
   let pendingResume = null; // 换源后待恢复的续播位置（loadedmetadata 前直接设置无效）
+  let seeking = false;      // 进度条拖拽/点击中：暂停 timeupdate 回写进度条
 
   video.addEventListener('loadedmetadata', () => {
     // 时长就绪：回填当前条目并立即保存一次
@@ -77,9 +78,9 @@ export function initPlayer(ctx) {
   });
 
   video.addEventListener('timeupdate', () => {
-    // 进度条与时间显示
+    // 进度条与时间显示（拖动/点击进度条期间不回写，避免覆盖用户操作）
     const d = video.duration || 0;
-    if (d > 0) seekBar.value = Math.round((video.currentTime / d) * 1000);
+    if (d > 0 && !seeking) seekBar.value = Math.round((video.currentTime / d) * 1000);
     timeCur.textContent = fmt(video.currentTime);
     if (current && progressCb) {
       progressCb(current.file_path, video.currentTime, d);
@@ -111,7 +112,13 @@ export function initPlayer(ctx) {
     if (nextIdx < g.videos.length) {
       ctx.playAt(ctx.activeGroup, nextIdx);
     } else if (mode === 'list-loop' && g.videos.length > 0) {
-      ctx.playAt(ctx.activeGroup, 0); // 列表循环：末尾回到本组第一集
+      // 列表循环：末尾回到本组第一集（单文件组直接重播，不走 load 的同文件拦截）
+      if (g.videos.length === 1) {
+        video.currentTime = 0;
+        video.play();
+      } else {
+        ctx.playAt(ctx.activeGroup, 0);
+      }
     }
     // 'next' 到组末尾：停住
   });
@@ -121,12 +128,13 @@ export function initPlayer(ctx) {
   btnFwd.addEventListener('click', () => seekBy(5));
   btnBack.addEventListener('click', () => seekBy(-5));
 
-  // 进度条拖拽
-  seekBar.addEventListener('input', () => (seekBar.dragging = true));
+  // 进度条拖拽/点击：input 期间置 seeking，防止 timeupdate 回写覆盖导致首次点击失效
+  seekBar.addEventListener('pointerdown', () => (seeking = true));
+  seekBar.addEventListener('input', () => (seeking = true));
   seekBar.addEventListener('change', () => {
     const d = video.duration || 0;
     if (d > 0) video.currentTime = (seekBar.value / 1000) * d;
-    seekBar.dragging = false;
+    seeking = false;
   });
 
   // 音量 = 系统音量（双向同步）：软件内不再衰减，video.volume 恒为 1.0
@@ -190,9 +198,7 @@ export function initPlayer(ctx) {
   /** 加载视频并按历史进度续播 */
   function load(item) {
     if (current && current.file_path === item.file_path) {
-      // 同一视频：从头重播（单集循环/列表循环回到本集/用户重复点击）
-      video.currentTime = 0;
-      video.play();
+      // 同一视频：不做任何事（点击/双击当前播放项不重置进度）
       return;
     }
     save(true); // 切换前保存上一个

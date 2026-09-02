@@ -58,6 +58,7 @@ playerWCY/
 
 | 文档                                           | 内容                     |
 | -------------------------------------------- | ---------------------- |
+| [docs/FEATURES.md](docs/FEATURES.md)         | 产品功能全量清单（优化前基线）       |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 模块职责、数据流、IPC 命令、数据库表结构 |
 | [docs/BUILD.md](docs/BUILD.md)               | 环境要求、编译、归档、常见问题        |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md)       | 版本变更记录                 |

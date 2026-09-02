@@ -33,12 +33,13 @@ export function initSidebar(videoApi, ctx) {
   const selCount = document.getElementById('sel-count');
   const menuEl = document.getElementById('ctx-menu');
 
-  /** 按分组索引播放（供点击与播放模式共用） */
+  /** 按分组索引播放（供点击与播放模式共用）；播放身份记录为 file_path */
   ctx.playAt = (g, i) => {
     const group = ctx.groups[g];
     if (!group || !group.videos[i]) return;
     ctx.activeGroup = g;
     ctx.activeIdx = i;
+    ctx.activePath = group.videos[i].file_path;
     videoApi.load(group.videos[i]);
     markActive(listEl, g, i);
   };
@@ -155,12 +156,20 @@ export function initSidebar(videoApi, ctx) {
 /** 从 SQLite 重载全部文件夹分组并渲染 */
 async function reload(ctx, listEl) {
   ctx.groups = await invoke('list_library');
-  // 校正当前播放索引（记录可能被删）
-  if (ctx.activeGroup >= 0) {
-    const cur = ctx.groups[ctx.activeGroup];
-    if (!cur || !cur.videos[ctx.activeIdx]) {
-      ctx.activeGroup = -1;
-      ctx.activeIdx = -1;
+  // 播放身份 = file_path：删除/刷新后按路径重算分组索引，防止索引偏移
+  // 导致高亮错位或"播完下集"切错目标
+  ctx.activeGroup = -1;
+  ctx.activeIdx = -1;
+  if (ctx.activePath) {
+    outer: for (let g = 0; g < ctx.groups.length; g++) {
+      const vs = ctx.groups[g].videos;
+      for (let i = 0; i < vs.length; i++) {
+        if (vs[i].file_path === ctx.activePath) {
+          ctx.activeGroup = g;
+          ctx.activeIdx = i;
+          break outer;
+        }
+      }
     }
   }
   renderList(listEl, ctx);
@@ -289,6 +298,7 @@ function deleteFolder(ctx, listEl, folder, videoApi, selBar, selCount) {
     videoApi.stopTracking();
     ctx.activeGroup = -1;
     ctx.activeIdx = -1;
+    ctx.activePath = '';
   }
   invoke('remove_folder', { folder })
     .then(() => {
@@ -305,6 +315,7 @@ function stopIfPlaying(ctx, videoApi, paths) {
     videoApi.stopTracking();
     ctx.activeGroup = -1;
     ctx.activeIdx = -1;
+    ctx.activePath = '';
   }
 }
 

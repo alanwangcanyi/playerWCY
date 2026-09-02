@@ -13,7 +13,7 @@
 use coreaudio_sys::*;
 use std::ffi::c_void;
 use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 use tauri::{AppHandle, Emitter};
 
 /// 全局 AppHandle：CoreAudio 回调线程里向窗口推送事件用
@@ -21,6 +21,10 @@ static APP: OnceLock<AppHandle> = OnceLock::new();
 
 /// 当前已注册音量监听的设备 ID（0 = 尚未绑定；音频回调线程与主线程共用，原子访问）
 static CURRENT_DEV: AtomicU32 = AtomicU32::new(0);
+
+/// 重绑流程互斥锁：保证"更新设备 ID → 移除旧监听 → 注册新监听"整体串行，
+/// 消除快速连续切换设备时的竞态窗口（如重复注册/旧监听残留）
+static REBIND_LOCK: Mutex<()> = Mutex::new(());
 
 /// 虚拟主音量属性地址（scope=output, element=main）
 fn master_addr() -> AudioObjectPropertyAddress {
@@ -195,7 +199,11 @@ unsafe extern "C" fn on_volume_changed(
 }
 
 /// 把音量监听迁移到当前默认输出设备（设备未变则不动），并推送一次新设备音量
+/// 互斥锁保护完整重绑流程；Add/Remove 返回状态按位记录（失败不中断，下次设备变化会重试重绑）
 unsafe fn rebind_volume_listeners() {
+    // 串行化：防止并发重绑导致重复注册或旧监听残留
+    let _guard = REBIND_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+
     let Some(new_dev) = default_output_device() else {
         return;
     };
@@ -203,10 +211,10 @@ unsafe fn rebind_volume_listeners() {
     if old == new_dev {
         return; // 设备没变（首次绑定 old=0 且 new_dev 非 0 时正常走后续）
     }
-    // 移除旧设备上的音量监听（设备已拔出时调用无害）
+    // 移除旧设备上的音量监听（设备已拔出时返回错误，属预期，忽略）
     if old != 0 {
         for addr in watch_addrs() {
-            AudioObjectRemovePropertyListener(
+            let _ = AudioObjectRemovePropertyListener(
                 old,
                 &addr,
                 Some(on_volume_changed),
@@ -214,17 +222,26 @@ unsafe fn rebind_volume_listeners() {
             );
         }
     }
-    // 在新设备上注册音量监听
+    // 在新设备上注册音量监听；记录是否有任一注册成功
+    let mut any_ok = false;
     for addr in watch_addrs() {
         if AudioObjectHasProperty(new_dev, &addr) == 0 {
             continue;
         }
-        AudioObjectAddPropertyListener(
+        if AudioObjectAddPropertyListener(
             new_dev,
             &addr,
             Some(on_volume_changed),
             std::ptr::null_mut(),
-        );
+        ) == 0
+        {
+            any_ok = true;
+        }
+    }
+    // 全部注册失败（异常设备）：清零绑定状态，下次设备变化事件会再次尝试重绑
+    if !any_ok {
+        CURRENT_DEV.store(0, Ordering::SeqCst);
+        return;
     }
     // 立即推送新设备当前音量（不同设备音量不同，前端音量条同步到正确值）
     if let Some(app) = APP.get() {

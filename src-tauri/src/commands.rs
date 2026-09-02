@@ -93,15 +93,15 @@ pub fn list_library(state: State<AppState>) -> Result<Vec<FolderGroup>, String> 
 /// 删除整个文件夹记录（级联删其下视频记录；不删除磁盘文件）
 #[tauri::command]
 pub fn remove_folder(state: State<AppState>, folder: String) -> Result<(), String> {
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
-    db::delete_folder_records(&conn, &folder).map_err(|e| e.to_string())
+    let mut conn = state.db.lock().map_err(|e| e.to_string())?;
+    db::delete_folder_records(&mut conn, &folder).map_err(|e| e.to_string())
 }
 
 /// 删除多条视频记录（不删除磁盘文件）
 #[tauri::command]
 pub fn remove_videos(state: State<AppState>, paths: Vec<String>) -> Result<(), String> {
-    let conn = state.db.lock().map_err(|e| e.to_string())?;
-    db::delete_video_records(&conn, &paths).map_err(|e| e.to_string())
+    let mut conn = state.db.lock().map_err(|e| e.to_string())?;
+    db::delete_video_records(&mut conn, &paths).map_err(|e| e.to_string())
 }
 
 /// 保存当前视频播放进度

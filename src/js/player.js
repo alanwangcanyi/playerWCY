@@ -94,6 +94,24 @@ export function initPlayer(ctx) {
     save(true); // 暂停立即保存
   });
 
+  // 播放失败反馈：显示文件名与原因（文件被移动/删除/编码不支持等）
+  const errorTip = document.getElementById('error-tip');
+  const errorMsg = document.getElementById('error-msg');
+  const ERROR_REASONS = {
+    1: '加载被中断',
+    2: '网络错误',
+    3: '解码失败',
+    4: '格式不受支持或文件不存在',
+  };
+  video.addEventListener('error', () => {
+    if (!current) return;
+    const code = video.error ? video.error.code : 0;
+    errorMsg.textContent = `无法播放：${current.file_name}（${
+      ERROR_REASONS[code] || '未知错误'
+    }）`;
+    errorTip.hidden = false;
+  });
+
   // 播完处理：按当前播放模式分支
   video.addEventListener('ended', () => {
     save(true);
@@ -204,6 +222,7 @@ export function initPlayer(ctx) {
     save(true); // 切换前保存上一个
     current = { ...item };
     video.src = convertFileSrc(item.file_path);
+    errorTip.hidden = true; // 清除上一次的失败提示
     wrap.classList.add('playing');
     // 续播：有历史进度且未播完（>3 秒且 <98%）时跳到上次位置
     // 注：换源后直接设 currentTime 无效，待 loadedmetadata 时恢复；倍速同理

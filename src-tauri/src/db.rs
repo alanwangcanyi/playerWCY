@@ -139,18 +139,24 @@ pub fn ensure_video(
 }
 
 /// 删除整个文件夹记录（级联删其下视频记录；不动磁盘文件）
-pub fn delete_folder_records(conn: &Connection, folder: &str) -> Result<(), rusqlite::Error> {
-    conn.execute("DELETE FROM videos WHERE folder_path = ?1", params![folder])?;
-    conn.execute("DELETE FROM folders WHERE path = ?1", params![folder])?;
-    Ok(())
+/// 事务保证：两条删除要么全部成功要么整体回滚
+pub fn delete_folder_records(conn: &mut Connection, folder: &str) -> Result<(), rusqlite::Error> {
+    let tx = conn.transaction()?;
+    tx.execute("DELETE FROM videos WHERE folder_path = ?1", params![folder])?;
+    tx.execute("DELETE FROM folders WHERE path = ?1", params![folder])?;
+    tx.commit()
 }
 
-/// 删除多条视频记录（不动磁盘文件）
-pub fn delete_video_records(conn: &Connection, paths: &[String]) -> Result<(), rusqlite::Error> {
-    for p in paths {
-        conn.execute("DELETE FROM videos WHERE file_path = ?1", params![p])?;
+/// 删除多条视频记录（不动磁盘文件）；单事务批量执行，失败整体回滚
+pub fn delete_video_records(conn: &mut Connection, paths: &[String]) -> Result<(), rusqlite::Error> {
+    let tx = conn.transaction()?;
+    {
+        let mut stmt = tx.prepare("DELETE FROM videos WHERE file_path = ?1")?;
+        for p in paths {
+            stmt.execute(params![p])?;
+        }
     }
-    Ok(())
+    tx.commit()
 }
 
 /// 查询单个视频的进度（不存在返回 None）
@@ -268,7 +274,7 @@ mod tests {
     /// 文件夹记录：touch / list / 级联删除
     #[test]
     fn folder_records_lifecycle() {
-        let conn = db();
+        let mut conn = db();
         touch_folder(&conn, "/media/movies").unwrap();
         touch_folder(&conn, "/media/series").unwrap();
         touch_folder(&conn, "/media/movies").unwrap(); // 重复打开只更新时间
@@ -283,21 +289,21 @@ mod tests {
         let rows = list_videos_by_folder(&conn, "/media/movies").unwrap();
         assert_eq!(rows.len(), 1);
 
-        // 级联删除文件夹：视频记录一并删除
-        delete_folder_records(&conn, "/media/movies").unwrap();
+        // 级联删除文件夹：视频记录一并删除（事务）
+        delete_folder_records(&mut conn, "/media/movies").unwrap();
         assert!(list_folders(&conn).unwrap().len() == 1);
         assert!(list_videos_by_folder(&conn, "/media/movies").unwrap().is_empty());
     }
 
-    /// 删除多条视频记录
+    /// 删除多条视频记录（事务）
     #[test]
     fn delete_video_records_batch() {
-        let conn = db();
+        let mut conn = db();
         touch_folder(&conn, "/v").unwrap();
         for n in ["a.mp4", "b.mp4", "c.mp4"] {
             ensure_video(&conn, &format!("/v/{}", n), n, "/v").unwrap();
         }
-        delete_video_records(&conn, &["/v/a.mp4".into(), "/v/b.mp4".into()]).unwrap();
+        delete_video_records(&mut conn, &["/v/a.mp4".into(), "/v/b.mp4".into()]).unwrap();
         let rows = list_videos_by_folder(&conn, "/v").unwrap();
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].file_name, "c.mp4");

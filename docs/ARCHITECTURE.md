@@ -12,22 +12,26 @@
                                                           ~/Library/Application Support/com.wcy.playerwcy/data.db
 ```
 
-- 前后端**唯一**通道是 Tauri IPC（`invoke`），共 4 个命令，职责清晰。
+- 前后端**唯一**通道是 Tauri IPC（`invoke`），共 7 个命令，职责清晰。
 
 - 本地视频通过 Tauri `asset` 协议播放：`convertFileSrc(path)` → `asset://` URL → `<video>` 标签。
 
-- 系统音量通过 Rust 端 CoreAudio 读写与监听，变化时经 `system-volume` 事件推送前端（volume.rs）。
+- 系统音量通过 Rust 端 CoreAudio 读写与监听（volume.rs）：读写以 VirtualMasterVolume 为主（声道值兜底）；音量监听绑定当前默认设备，并在系统对象上监听默认设备变化，切换设备时互斥锁保护下自动重绑并推送新设备音量。
 
 ## IPC 命令
 
 | 命令                  | 参数                                                   | 返回              | 说明                                                                           |
 | ------------------- | ---------------------------------------------------- | --------------- | ---------------------------------------------------------------------------- |
-| `scan_folder`       | `folder: string`                                     | `VideoItem[]`   | 扫描目录一层内视频文件（mp4/mov/m4v/webm/mkv/avi），按文件名排序，合并 SQLite 历史进度；目录读取失败返回错误（前端显示） |
+| `scan_folder`       | `folder: string`                                     | `VideoItem[]`   | 扫描目录一层内视频文件（mp4/mov/m4v/webm/mkv/avi），按文件名排序；文件夹与新视频入库（INSERT OR IGNORE 不覆盖进度），合并历史进度返回；目录读取失败返回错误 |
+| `list_library`      | 无                                                    | `FolderGroup[]` | 启动加载：全部文件夹及其视频记录（纯读 SQLite，不扫磁盘） |
+| `remove_folder`     | `folder: string`                                     | 无               | 删除文件夹记录（事务级联删其下视频记录；不动磁盘文件） |
+| `remove_videos`     | `paths: string[]`                                    | 无               | 批量删除视频记录（单事务；不动磁盘文件） |
 | `save_progress`     | `filePath, fileName, folderPath, position, duration` | 无               | upsert 进度（百分比 clamp 0-100）；`folderPath` 为空时由后端从路径推导父目录                       |
-| `get_system_volume` | 无                                                    | `f32` (0.0-1.0) | 读取默认输出设备音量（左右声道平均）                                                           |
-| `set_system_volume` | `volume: f64` (0.0-1.0)                              | 无               | 设置默认输出设备音量                                                                   |
+| `get_system_volume` | 无                                                    | `f32` (0.0-1.0) | 读取默认输出设备音量（VirtualMasterVolume 优先） |
+| `set_system_volume` | `volume: f64` (0.0-1.0)                              | 无               | 设置默认输出设备音量 |
 
-`VideoItem = { file_path, file_name, position(秒), duration(秒), percent(0-100) }`
+`VideoItem = { file_path, file_name, folder_path, position(秒), duration(秒), percent(0-100) }`
+`FolderGroup = { path, name, videos: VideoItem[] }`
 
 ## 数据库表
 
@@ -42,9 +46,23 @@ CREATE TABLE videos (
     percent     REAL NOT NULL DEFAULT 0,
     updated_at  TEXT NOT NULL
 );
+
+CREATE TABLE folders (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    path           TEXT UNIQUE NOT NULL,  -- 文件夹绝对路径
+    name           TEXT NOT NULL,         -- 显示名（路径最后一段）
+    added_at       TEXT NOT NULL,
+    last_opened_at TEXT NOT NULL
+);
 ```
 
 ## 关键流程
+
+### 播放身份（activePath）
+
+- 当前播放项的身份是 `file_path`（`ctx.activePath`），不是数组索引
+- 列表删除/刷新后 `reload()` 按路径重算 `activeGroup/activeIdx`，防止索引偏移导致高亮错位或"播完下集"切错目标
+- 删除正在播放的条目/文件夹时停止进度跟踪（`stopTracking`），防止自动保存把记录写回
 
 ### 进度记忆
 

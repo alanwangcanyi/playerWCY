@@ -23,6 +23,8 @@ playerWCY/
 ├── docs/                        全部文档（位置固定于此）
 │   ├── ARCHITECTURE.md          架构详解：模块职责、数据流、IPC 命令
 │   ├── BUILD.md                 编译与归档流程（含环境要求）
+│   ├── FEATURES.md              产品功能全量清单（后续优化输入基线）
+│   ├── FEATURES_REVIEW.md       FEATURES 功能清单对应的架构审查结论
 │   └── CHANGELOG.md             变更记录（每次修改追加一条）
 ├── src/                         前端（Web，无框架）
 │   ├── index.html               界面结构：侧边栏 + 播放区 + 控制栏
@@ -59,6 +61,7 @@ playerWCY/
 | 文档                                           | 内容                     |
 | -------------------------------------------- | ---------------------- |
 | [docs/FEATURES.md](docs/FEATURES.md)         | 产品功能全量清单（优化前基线）       |
+| [docs/FEATURES_REVIEW.md](docs/FEATURES_REVIEW.md) | FEATURES 对应的架构审查结论       |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 模块职责、数据流、IPC 命令、数据库表结构 |
 | [docs/BUILD.md](docs/BUILD.md)               | 环境要求、编译、归档、常见问题        |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md)       | 版本变更记录                 |

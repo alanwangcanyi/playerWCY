@@ -11,6 +11,7 @@ const ctx = {
   groups: [],
   activeGroup: -1,
   activeIdx: -1,
+  activePath: '', // 播放身份 = 文件路径（列表刷新/删除后按路径重算索引，防偏移）
   playAt: () => {},
 };
 

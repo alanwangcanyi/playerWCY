@@ -56,8 +56,7 @@ export function initPlayer(ctx) {
   /* ---- 倍速记忆：恢复上次调整的倍速（换源后 loadedmetadata 重应用） ---- */
   const savedRate = parseFloat(localStorage.getItem('pwcy-rate'));
   if (!isNaN(savedRate) && savedRate >= 0.5 && savedRate <= 2.0) {
-    rateInput.value = savedRate.toFixed(2);
-    rateInput.classList.add('current');
+    setRate(savedRate); // 统一走 setRate：同步输入框/预设高亮/记忆
   }
 
   /* ---- 视频事件 ---- */
@@ -249,12 +248,15 @@ export function initPlayer(ctx) {
     );
   }
 
-  /** 设置倍速（0.50-2.00，两位小数） */
+  /** 设置倍速（0.50-2.00，两位小数）：同步输入框、预设按钮高亮与记忆 */
   function setRate(rate) {
     const v = Math.round(Math.min(2.0, Math.max(0.5, rate)) * 100) / 100;
     video.playbackRate = v;
     rateInput.value = v.toFixed(2);
     rateInput.classList.add('current');
+    document.querySelectorAll('.btn-rate').forEach((b) => {
+      b.classList.toggle('active', parseFloat(b.dataset.rate) === v);
+    });
     localStorage.setItem('pwcy-rate', v.toFixed(2)); // 记忆用户调整的倍速
   }
 

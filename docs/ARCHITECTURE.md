@@ -20,15 +20,15 @@
 
 ## IPC 命令
 
-| 命令                  | 参数                                                   | 返回              | 说明                                                                           |
-| ------------------- | ---------------------------------------------------- | --------------- | ---------------------------------------------------------------------------- |
+| 命令                  | 参数                                                   | 返回              | 说明                                                                                                 |
+| ------------------- | ---------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------- |
 | `scan_folder`       | `folder: string`                                     | `VideoItem[]`   | 扫描目录一层内视频文件（mp4/mov/m4v/webm/mkv/avi），按文件名排序；文件夹与新视频入库（INSERT OR IGNORE 不覆盖进度），合并历史进度返回；目录读取失败返回错误 |
-| `list_library`      | 无                                                    | `FolderGroup[]` | 启动加载：全部文件夹及其视频记录（纯读 SQLite，不扫磁盘） |
-| `remove_folder`     | `folder: string`                                     | 无               | 删除文件夹记录（事务级联删其下视频记录；不动磁盘文件） |
-| `remove_videos`     | `paths: string[]`                                    | 无               | 批量删除视频记录（单事务；不动磁盘文件） |
-| `save_progress`     | `filePath, fileName, folderPath, position, duration` | 无               | upsert 进度（百分比 clamp 0-100）；`folderPath` 为空时由后端从路径推导父目录                       |
-| `get_system_volume` | 无                                                    | `f32` (0.0-1.0) | 读取默认输出设备音量（VirtualMasterVolume 优先） |
-| `set_system_volume` | `volume: f64` (0.0-1.0)                              | 无               | 设置默认输出设备音量 |
+| `list_library`      | 无                                                    | `FolderGroup[]` | 启动加载：全部文件夹及其视频记录（纯读 SQLite，不扫磁盘）                                                                   |
+| `remove_folder`     | `folder: string`                                     | 无               | 删除文件夹记录（事务级联删其下视频记录；不动磁盘文件）                                                                        |
+| `remove_videos`     | `paths: string[]`                                    | 无               | 批量删除视频记录（单事务；不动磁盘文件）                                                                               |
+| `save_progress`     | `filePath, fileName, folderPath, position, duration` | 无               | upsert 进度（百分比 clamp 0-100）；`folderPath` 为空时由后端从路径推导父目录                                             |
+| `get_system_volume` | 无                                                    | `f32` (0.0-1.0) | 读取默认输出设备音量（VirtualMasterVolume 优先）                                                                 |
+| `set_system_volume` | `volume: f64` (0.0-1.0)                              | 无               | 设置默认输出设备音量                                                                                         |
 
 `VideoItem = { file_path, file_name, folder_path, position(秒), duration(秒), percent(0-100) }`
 `FolderGroup = { path, name, videos: VideoItem[] }`
@@ -61,7 +61,9 @@ CREATE TABLE folders (
 ### 播放身份（activePath）
 
 - 当前播放项的身份是 `file_path`（`ctx.activePath`），不是数组索引
+
 - 列表删除/刷新后 `reload()` 按路径重算 `activeGroup/activeIdx`，防止索引偏移导致高亮错位或"播完下集"切错目标
+
 - 删除正在播放的条目/文件夹时停止进度跟踪（`stopTracking`），防止自动保存把记录写回
 
 ### 进度记忆

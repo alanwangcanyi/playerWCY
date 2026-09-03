@@ -1,6 +1,6 @@
 [package]
 name = "playerwcy"
-version = "1.0.0"
+version = "1.4.1"
 description = "playerWCY 视频播放器（macOS）"
 authors = ["wcy"]
 edition = "2021"

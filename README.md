@@ -12,8 +12,9 @@ macOS（Apple Silicon）本地视频播放器：打开文件夹浏览视频清�
 
 ## ⚠️ 修改前必读（强制规则）
 
-1. **修改本项目任意内容（代码 / 配置 / 文档）之前，必须先更新本 README 对应章节及** **`docs/CHANGELOG.md`，然后再动代码。**
+1. **修改本项目任意内容（代码 / 配置 / 文档）之前，必须先更新本 README 对应章节及 `docs/CHANGELOG.md`，然后再动代码。**
 2. **Log 工作流**：任何更改前先在 `log/当天日期.log`（如 `log/20260901.log`）末尾追加一行 `[时间] 进行：改动内容`；改动完成后将该行改为 `[时间] 完成：改动内容`。当天文件不存在则新建，存在则追加到最后一行。编译归档记录由 `scripts/archive.sh` 自动写入。
+3. **版本号同步**：凡 CHANGELOG 中升版本号，必须同步修改三处：`package.json`、`src-tauri/tauri.conf.json`、`src-tauri/Cargo.toml`（About 页显示取自 tauri.conf.json）。
 
 ## 目录架构
 

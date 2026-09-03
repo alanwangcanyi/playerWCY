@@ -21,6 +21,7 @@ macOS（Apple Silicon）本地视频播放器：打开文件夹浏览视频清�
 ```
 playerWCY/
 ├── README.md                    本文件：总架构说明 + 文档索引（修改前必先更新）
+├── 编程agents规则.md            通用编程规则（沉淀自本项目，可发给任意 AI 复用）
 ├── docs/                        全部文档（位置固定于此）
 │   ├── ARCHITECTURE.md          架构详解：模块职责、数据流、IPC 命令
 │   ├── BUILD.md                 编译与归档流程（含环境要求）

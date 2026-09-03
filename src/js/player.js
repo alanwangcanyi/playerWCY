@@ -173,7 +173,7 @@ export function initPlayer(ctx) {
   });
 
   // 倍速：自定义输入（0.50 - 2.00，最多两位小数）
-  rateInput.addEventListener('change', () => {
+  const applyRateInput = () => {
     const v = parseFloat(rateInput.value);
     if (isNaN(v) || v < 0.5 || v > 2.0) {
       rateInput.value = '';
@@ -181,6 +181,19 @@ export function initPlayer(ctx) {
       return;
     }
     setRate(Math.round(v * 100) / 100);
+  };
+  rateInput.addEventListener('change', applyRateInput);
+  // Enter：生效并失焦，空格/左右键立即恢复全局快捷键；Esc：放弃编辑（还原显示）并失焦
+  rateInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== 'Escape') return;
+    e.preventDefault();
+    if (e.key === 'Enter') {
+      applyRateInput();
+    } else {
+      const applied = parseFloat(localStorage.getItem('pwcy-rate'));
+      rateInput.value = isNaN(applied) ? '' : applied.toFixed(2);
+    }
+    rateInput.blur();
   });
 
   // 点 X 关窗：保存进度后隐藏窗口（应用留驻 Dock 不退出；点 Dock 图标恢复窗口）

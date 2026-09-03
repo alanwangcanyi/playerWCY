@@ -430,6 +430,78 @@ button svg,
 
 .speed-group .label, .volume-group .label { font-size: 12px; color: var(--text-dim); }
 
+/* ===== 倍速快捷键开关（toggle switch） ===== */
+.hotkeys-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  line-height: 1;
+}
+.hotkeys-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.tg-track {
+  width: 30px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  padding: 1px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.tg-knob {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--text-dim);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.hotkeys-toggle input:checked + .tg-track {
+  background: rgba(111, 111, 255, 0.45);
+  border-color: var(--brand);
+}
+.hotkeys-toggle input:checked + .tg-track .tg-knob {
+  transform: translateX(12px);
+  background: #fff;
+}
+.hotkeys-toggle input:focus-visible + .tg-track {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ===== 倍速按钮 kbd 角标（快捷键提示） ===== */
+.btn-rate {
+  position: relative;
+  padding: 6px 12px;
+}
+.btn-rate kbd,
+.rate-input-wrap kbd {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 12px;
+  text-align: center;
+  pointer-events: none;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.btn-rate.active kbd { color: var(--brand); border-color: var(--brand); }
+/* 快捷键关闭时角标变暗提示不可用 */
+.speed-group.no-hotkeys kbd { opacity: 0.3; }
+
+.rate-input-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 #rate-input {
   width: 64px;
   padding: 6px 8px;

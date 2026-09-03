@@ -40,3 +40,14 @@ btnToggle.addEventListener('click', () => {
   applySidebar(hidden);
 });
 applySidebar(localStorage.getItem('pwcy-sidebar-hidden') === '1');
+
+/* ---- 倍速快捷键开关（数字键 1-5；状态记忆；关闭时角标变暗） ---- */
+const hotkeysToggle = document.getElementById('rate-hotkeys');
+const speedGroup = document.querySelector('.speed-group');
+function applyRateHotkeys(on) {
+  localStorage.setItem('pwcy-rate-hotkeys', on ? '1' : '0');
+  speedGroup.classList.toggle('no-hotkeys', !on);
+}
+hotkeysToggle.addEventListener('change', () => applyRateHotkeys(hotkeysToggle.checked));
+hotkeysToggle.checked = localStorage.getItem('pwcy-rate-hotkeys') !== '0';
+speedGroup.classList.toggle('no-hotkeys', !hotkeysToggle.checked);

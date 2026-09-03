@@ -196,6 +196,16 @@ export function initPlayer(ctx) {
     togglePlay,
     seekBy,
     setRate,
+    /** 倍速快捷键槽位：1-4 对应预设按钮，5 应用自定义输入框的值 */
+    applyRateSlot(slot) {
+      if (slot >= 1 && slot <= 4) {
+        const btn = document.querySelector(`.btn-rate[data-slot="${slot}"]`);
+        if (btn) setRate(parseFloat(btn.dataset.rate));
+      } else if (slot === 5) {
+        const v = parseFloat(rateInput.value);
+        if (!isNaN(v) && v >= 0.5 && v <= 2.0) setRate(v);
+      }
+    },
     /** 停止进度跟踪：记录被删除时调用，避免继续播放把记录"复活" */
     stopTracking() {
       current = null;

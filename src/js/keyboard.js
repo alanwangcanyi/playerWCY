@@ -27,6 +27,13 @@ export function initKeyboard(videoApi) {
         e.preventDefault();
         doSeek(videoApi, -1);
         break;
+
+      default:
+        // 倍速快捷键：数字 1-4 预设、5 应用自定义值（开关关闭时不响应；
+        // 焦点在输入框时上面已 return，数字键正常输入）
+        if (e.key >= '1' && e.key <= '5' && localStorage.getItem('pwcy-rate-hotkeys') !== '0') {
+          videoApi.applyRateSlot(+e.key);
+        }
     }
   });
 

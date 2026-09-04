@@ -5,5 +5,7 @@ src-tauri/gen/schemas/
 *.log.tmp
 # 编译归档产物为二进制，不入库（本地保留）
 20260901-playerWCY-archive/
+# 本地测试媒体文件（曾致 378MB 文件入历史被 GitHub 拒推，勿入库）
+test/
 # 误克隆的远程仓库副本（GitHub Desktop Clone 产生），待手动删除
 playerWCY/

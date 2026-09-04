@@ -104,8 +104,10 @@ body {
 #btn-toggle-sidebar:hover svg { width: 24px; height: 24px; }
 
 /* ===== 左侧导航 ===== */
+/* 两个入口按钮：主（打开文件夹，品牌色）+ 次（打开文件，ghost），并排等宽 */
+.open-actions { display: flex; gap: 8px; margin: 12px 12px 0; }
 #btn-open-folder {
-  margin: 12px;
+  flex: 1;
   padding: 10px;
   background: var(--brand);
   color: #fff;
@@ -115,9 +117,26 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: filter 0.12s ease;
+  white-space: nowrap;
 }
 #btn-open-folder:hover { filter: brightness(1.15); }
 #btn-open-folder:active { filter: brightness(0.92); }
+/* 次级按钮：透明底 + 边框，视觉权重低于主操作 */
+#btn-open-file.ghost {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+  white-space: nowrap;
+}
+#btn-open-file.ghost:hover { border-color: var(--brand); color: var(--text); background: rgba(255, 255, 255, 0.03); }
+#btn-open-file.ghost:active { background: rgba(255, 255, 255, 0.06); }
 
 #video-list { flex: 1; overflow-y: auto; list-style: none; padding: 8px; min-height: 0; }
 
@@ -137,17 +156,32 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* 吸顶条（JS 虚拟吸顶）：滚动容器的直接子元素，sticky 最可靠形态 */
+/* 吸顶条（JS 虚拟吸顶）：滚动容器的直接子元素，sticky 最可靠形态
+   显隐用 .show 过渡（max-height+opacity，border-box 下 max-height:0 完全收起不占位） */
 .sticky-ghost {
   position: sticky;
   top: 0;
   z-index: 6;
   background: var(--bg-panel);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid transparent;
   border-radius: 0 0 var(--radius) var(--radius);
-  margin: 0 0 4px;
+  margin: 0 0 0;
+  max-height: 0;
+  opacity: 0;
+  visibility: hidden;
+  overflow: hidden;
+  pointer-events: none;
+  transition: max-height 0.18s ease, opacity 0.18s ease, visibility 0.18s,
+    margin-bottom 0.18s ease, border-color 0.18s ease;
 }
-.sticky-ghost[hidden] { display: none !important; }
+.sticky-ghost.show {
+  max-height: 44px; /* 大于实际高度即可（实际约 30px），过渡收放用 */
+  opacity: 1;
+  visibility: visible;
+  margin-bottom: 4px;
+  border-bottom-color: var(--border);
+  pointer-events: auto;
+}
 .sticky-ghost.st-collapsed .chev svg { transform: rotate(0deg); }
 .sticky-ghost:not(.st-collapsed) .chev svg { transform: rotate(90deg); }
 .group-header:hover { background: var(--bg-hover); color: var(--text); }
@@ -173,6 +207,11 @@ body {
   background: rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-full);
   padding: 1px 7px;
+}
+/* 单文件组徽章：品牌弱底色+品牌文字，与普通计数徽章区分 */
+.group-header .gcount.file-badge {
+  background: rgba(111, 111, 255, 0.16);
+  color: var(--brand);
 }
 
 .folder-group .group-videos { list-style: none; display: block; }
@@ -529,3 +568,60 @@ button svg,
 }
 #rate-input:focus { outline: none; border-color: var(--brand); }
 #rate-input.current { border-color: var(--brand); color: var(--brand); }
+
+/* ===== 应用内弹窗（替代原生 alert/confirm，样式与整体 UI 统一） ===== */
+.app-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  /* 不用 transform 动画：WKWebView 中避免与 video 合成层的遮挡问题 */
+  transition: opacity 0.16s ease, visibility 0.16s;
+}
+.app-dialog-overlay.show { opacity: 1; visibility: visible; }
+.app-dialog {
+  width: min(340px, calc(100vw - 48px));
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 18px 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+.app-dialog-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.app-dialog-msg {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  white-space: pre-line; /* 支持 \n 换行 */
+  word-break: break-all;
+}
+.app-dialog-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.app-dialog-btn { min-width: 72px; padding: 6px 14px; }
+.app-dialog-btn.primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.app-dialog-btn.primary:hover { background: #8585ff; border-color: #8585ff; }
+.app-dialog-btn.danger {
+  color: #ff8a80;
+  border-color: rgba(232, 70, 58, 0.4);
+}
+.app-dialog-btn.danger:hover {
+  background: rgba(232, 70, 58, 0.14);
+  border-color: rgba(232, 70, 58, 0.6);
+}

@@ -1,5 +1,7 @@
 // 侧边栏：文件夹分组树（可折叠）、勾选多选、右键菜单删除记录、打开文件夹刷新
 // 无 bundler：通过 withGlobalTauri 注入的 window.__TAURI__ 访问 API
+import { dialogAlert, dialogConfirm } from './dialog.js';
+
 const { open } = window.__TAURI__.dialog;
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
@@ -57,7 +59,7 @@ export function initSidebar(videoApi, ctx) {
       await reload(ctx, listEl);
     } catch (e) {
       console.error('打开文件夹失败:', e);
-      alert('打开文件夹失败: ' + e);
+      dialogAlert('打开文件夹失败：' + e);
     }
   });
 
@@ -75,7 +77,7 @@ export function initSidebar(videoApi, ctx) {
       playPath(ctx, file);
     } catch (e) {
       console.error('打开文件失败:', e);
-      alert('打开文件失败: ' + e);
+      dialogAlert('打开文件失败：' + e);
     }
   });
 
@@ -127,7 +129,7 @@ export function initSidebar(videoApi, ctx) {
           label: '在 Finder 中显示',
           action: () =>
             invoke('reveal_in_finder', { filePath: item.dataset.path }).catch((err) =>
-              alert(err)
+              dialogAlert(String(err), 'Finder 定位失败')
             ),
         },
         {
@@ -156,10 +158,14 @@ export function initSidebar(videoApi, ctx) {
   document.addEventListener('click', () => hideMenu(menuEl));
 
   // 底部多选操作条
-  document.getElementById('btn-del-sel').addEventListener('click', () => {
+  document.getElementById('btn-del-sel').addEventListener('click', async () => {
     const paths = [...selected];
     if (!paths.length) return;
-    if (!confirm(`删除所选 ${paths.length} 条记录？（仅删除记录，不会删除文件）`)) return;
+    const ok = await dialogConfirm(
+      `删除所选 ${paths.length} 条记录？\n仅删除记录，不会删除文件。`,
+      '删除确认'
+    );
+    if (!ok) return;
     stopIfPlaying(ctx, videoApi, paths);
     invoke('remove_videos', { paths })
       .then(() => {
@@ -167,7 +173,7 @@ export function initSidebar(videoApi, ctx) {
         return reload(ctx, listEl);
       })
       .then(() => updateSelBar(selBar, selCount))
-      .catch((e) => alert('删除失败: ' + e));
+      .catch((e) => dialogAlert('删除失败：' + e));
   });
   document.getElementById('btn-cancel-sel').addEventListener('click', clearSelection);
 
@@ -230,11 +236,11 @@ function renderList(listEl, ctx) {
     const header = document.createElement('div');
     header.className = 'group-header' + (group.kind === 1 ? ' file-group' : '');
     header.title = group.path;
-    // kind=1 单文件组：徽章显示"单文件"；普通文件夹显示视频数量
+    // kind=1 单文件组：徽章显示"单文件"并加 file-badge 样式区分；普通文件夹显示视频数量
     header.innerHTML = `<span class="chev">${CHEV_SVG}</span>
-      <span class="gname"></span><span class="gcount">${
-        group.kind === 1 ? '单文件' : group.videos.length
-      }</span>`;
+      <span class="gname"></span><span class="gcount${
+        group.kind === 1 ? ' file-badge' : ''
+      }">${group.kind === 1 ? '单文件' : group.videos.length}</span>`;
     header.querySelector('.gname').textContent = group.name;
     li.appendChild(header);
 
@@ -269,11 +275,11 @@ function renderList(listEl, ctx) {
 /** 当前吸顶条元素 */
 let stickyEl = null;
 
-/** 创建吸顶条（列表第一个子元素，sticky 最可靠形态），点击 = 收起/展开当前顶部组 */
+/** 创建吸顶条（列表第一个子元素，sticky 最可靠形态），点击 = 收起/展开当前顶部组
+ *  显隐由 .show class 过渡（CSS max-height/opacity 动画），初始隐藏态由样式默认值保证 */
 function buildSticky(listEl, ctx) {
   stickyEl = document.createElement('li');
   stickyEl.className = 'group-header sticky-ghost';
-  stickyEl.hidden = true;
   stickyEl.title = '点击收起/展开当前文件夹';
   stickyEl.innerHTML = `<span class="chev">${CHEV_SVG}</span>
     <span class="gname"></span><span class="gcount"></span>`;
@@ -304,26 +310,27 @@ function updateSticky(listEl, ctx) {
     }
   }
   if (!current || !header) {
-    stickyEl.hidden = true;
+    stickyEl.classList.remove('show');
     return;
   }
   // 组头自身还可见（未滚过顶）→ 不显示吸顶条
   if (header.getBoundingClientRect().bottom > listTop + 2) {
-    stickyEl.hidden = true;
+    stickyEl.classList.remove('show');
     return;
   }
   const g = +current.dataset.g;
   const group = ctx.groups[g];
   if (!group) {
-    stickyEl.hidden = true;
+    stickyEl.classList.remove('show');
     return;
   }
   stickyEl.dataset.g = g;
   stickyEl.querySelector('.gname').textContent = group.name;
-  stickyEl.querySelector('.gcount').textContent =
-    group.kind === 1 ? '单文件' : group.videos.length;
+  const cnt = stickyEl.querySelector('.gcount');
+  cnt.textContent = group.kind === 1 ? '单文件' : group.videos.length;
+  cnt.classList.toggle('file-badge', group.kind === 1);
   stickyEl.classList.toggle('st-collapsed', current.classList.contains('collapsed'));
-  stickyEl.hidden = false;
+  stickyEl.classList.add('show');
 }
 
 /** 按文件路径定位并播放（外部打开/单文件打开后使用） */
@@ -397,9 +404,13 @@ function hideMenu(menuEl) {
 }
 
 /* ---- 删除记录（不删磁盘文件） ---- */
-function deleteVideos(ctx, listEl, paths, videoApi, selBar, selCount) {
+async function deleteVideos(ctx, listEl, paths, videoApi, selBar, selCount) {
   if (!paths.length) return;
-  if (!confirm(`删除 ${paths.length} 条记录？（仅删除记录，不会删除文件）`)) return;
+  const ok = await dialogConfirm(
+    `删除 ${paths.length} 条记录？\n仅删除记录，不会删除文件。`,
+    '删除确认'
+  );
+  if (!ok) return;
   stopIfPlaying(ctx, videoApi, paths);
   invoke('remove_videos', { paths })
     .then(() => {
@@ -407,10 +418,10 @@ function deleteVideos(ctx, listEl, paths, videoApi, selBar, selCount) {
       return reload(ctx, listEl);
     })
     .then(() => updateSelBar(selBar, selCount))
-    .catch((e) => alert('删除失败: ' + e));
+    .catch((e) => dialogAlert('删除失败：' + e));
 }
 
-function deleteFolder(ctx, listEl, folder, videoApi, selBar, selCount) {
+async function deleteFolder(ctx, listEl, folder, videoApi, selBar, selCount) {
   if (!folder) return;
   const g = ctx.groups.find((x) => x.path === folder);
   const n = g ? g.videos.length : 0;
@@ -418,7 +429,7 @@ function deleteFolder(ctx, listEl, folder, videoApi, selBar, selCount) {
   const tip = isFile
     ? `删除单文件记录「${g ? g.name : folder}」？\n仅删除记录，不会删除磁盘文件。`
     : `删除文件夹记录「${g ? g.name : folder}」（含 ${n} 条视频记录）？\n仅删除记录，不会删除磁盘文件。`;
-  if (!confirm(tip)) return;
+  if (!(await dialogConfirm(tip, '删除确认'))) return;
   // 当前播放在该文件夹内则停止跟踪，避免记录复活
   if (ctx.activeGroup >= 0 && ctx.groups[ctx.activeGroup] && ctx.groups[ctx.activeGroup].path === folder) {
     videoApi.stopTracking();
@@ -432,7 +443,7 @@ function deleteFolder(ctx, listEl, folder, videoApi, selBar, selCount) {
       return reload(ctx, listEl);
     })
     .then(() => updateSelBar(selBar, selCount))
-    .catch((e) => alert('删除失败: ' + e));
+    .catch((e) => dialogAlert('删除失败：' + e));
 }
 
 /** 若正在播放的条目被删除，停止进度跟踪（防止自动保存把记录写回来） */

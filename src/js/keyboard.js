@@ -11,6 +11,8 @@ export function initKeyboard(videoApi) {
     // 输入框编辑时不响应全局快捷键
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    // 应用内弹窗打开时让位（空格此时应触发聚焦按钮，不控制播放）
+    if (document.body.classList.contains('dialog-open')) return;
 
     switch (e.key) {
       case ' ': // 空格：暂停/播放

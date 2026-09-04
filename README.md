@@ -35,7 +35,8 @@ playerWCY/
 │       ├── main.js              入口：组装三个模块
 │       ├── sidebar.js           打开文件夹 → 视频清单渲染（名称 + 播放百分比进度条）
 │       ├── player.js            播放核心：加载/续播/快进快退/倍速/音量/进度保存
-│       └── keyboard.js          键盘：空格暂停、左右键快进快退（按住自动加速）
+│       ├── keyboard.js          键盘：空格暂停、左右键快进快退（按住自动加速）
+│       └── dialog.js            应用内弹窗（替代原生 alert/confirm，Promise 化）
 ├── src-tauri/                   Rust 后端
 │   ├── Cargo.toml               依赖：tauri 2 / rusqlite(bundled) / tauri-plugin-dialog
 │   ├── build.rs                 tauri-build 构建脚本
@@ -47,6 +48,7 @@ playerWCY/
 │       ├── lib.rs               应用入口：注册插件、初始化 SQLite、挂载命令、启动音量监听
 │       ├── commands.rs          IPC 命令层：scan_folder / save_progress / get_system_volume / set_system_volume
 │       ├── folder.rs            文件夹扫描（视频扩展名过滤、排序）
+│       ├── media_proto.rs       自定义 stream:// 协议：Range/206 分块响应，支持 moov 在尾部的大文件
 │       ├── db.rs                SQLite 数据层：建表、进度查询、进度保存
 │       └── volume.rs            系统音量读写与变化监听（CoreAudio FFI）
 ├── scripts/

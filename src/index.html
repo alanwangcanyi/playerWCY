@@ -10,14 +10,16 @@
   <div id="app">
     <!-- 左侧：文件夹导航（分组树 + 多选删除） -->
     <aside id="sidebar">
-      <button id="btn-open-folder" title="选择视频文件夹（添加/刷新）">
-        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        <span>打开文件夹</span>
-      </button>
-      <button id="btn-open-file" title="选择单个视频/音频文件（独立加入侧栏）">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>打开文件</span>
-      </button>
+      <div class="open-actions">
+        <button id="btn-open-folder" title="选择视频文件夹（添加/刷新）">
+          <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>打开文件夹</span>
+        </button>
+        <button id="btn-open-file" class="ghost" title="选择单个视频/音频文件（独立加入侧栏）">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>打开文件</span>
+        </button>
+      </div>
       <ul id="video-list"></ul>
       <div id="sel-bar" class="sel-bar" hidden>
         <button id="btn-del-sel" class="danger">删除所选 (<span id="sel-count">0</span>)</button>

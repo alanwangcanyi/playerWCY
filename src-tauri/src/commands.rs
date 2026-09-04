@@ -22,6 +22,8 @@ pub struct VideoItem {
 pub struct FolderGroup {
     pub path: String,
     pub name: String,
+    /// 0=文件夹 1=单文件组
+    pub kind: i64,
     pub videos: Vec<VideoItem>,
 }
 
@@ -73,6 +75,7 @@ pub fn list_library(state: State<AppState>) -> Result<Vec<FolderGroup>, String> 
             Ok(FolderGroup {
                 path: f.path,
                 name: f.name,
+                kind: f.kind,
                 videos: rows
                     .into_iter()
                     .map(|r| VideoItem {
@@ -102,6 +105,29 @@ pub fn remove_folder(state: State<AppState>, folder: String) -> Result<(), Strin
 pub fn remove_videos(state: State<AppState>, paths: Vec<String>) -> Result<(), String> {
     let mut conn = state.db.lock().map_err(|e| e.to_string())?;
     db::delete_video_records(&mut conn, &paths).map_err(|e| e.to_string())
+}
+
+/// 打开单个视频文件：独立成组入库（不扫描其所在文件夹），返回文件路径供前端定位播放
+#[tauri::command]
+pub fn add_single_file(state: State<AppState>, file_path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&file_path);
+    if !path.is_file() {
+        return Err(format!("文件不存在或不是文件：{}", file_path));
+    }
+    let ext = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or_default();
+    if !folder::is_video_ext(ext) {
+        return Err(format!("不支持的文件类型：.{}（仅支持视频/音频格式）", ext));
+    }
+    let name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or_default()
+        .to_string();
+    let conn = state.db.lock().map_err(|e| e.to_string())?;
+    db::add_single_file(&conn, &file_path, &name).map_err(|e| e.to_string())
 }
 
 /// 保存当前视频播放进度

@@ -2,6 +2,7 @@
 // 无 bundler：通过 withGlobalTauri 注入的 window.__TAURI__ 访问 API
 const { open } = window.__TAURI__.dialog;
 const { invoke } = window.__TAURI__.core;
+const { listen } = window.__TAURI__.event;
 
 const CHEV_SVG =
   '<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
@@ -60,6 +61,34 @@ export function initSidebar(videoApi, ctx) {
     }
   });
 
+  // 打开文件 = 单个视频/音频独立成组入库（不扫描其所在文件夹），并定位播放
+  document.getElementById('btn-open-file').addEventListener('click', async () => {
+    try {
+      const file = await open({
+        multiple: false,
+        title: '选择视频/音频文件',
+        filters: [{ name: '视频/音频', extensions: ['mp4', 'mov', 'm4v', 'webm', 'mkv', 'avi'] }],
+      });
+      if (!file) return; // 用户取消
+      await invoke('add_single_file', { filePath: file });
+      await reload(ctx, listEl);
+      playPath(ctx, file);
+    } catch (e) {
+      console.error('打开文件失败:', e);
+      alert('打开文件失败: ' + e);
+    }
+  });
+
+  // Finder 双击视频用本软件打开（Rust 已入库并发事件）：刷新列表并定位播放
+  listen('open-file', async (e) => {
+    try {
+      await reload(ctx, listEl);
+      playPath(ctx, e.payload);
+    } catch (err) {
+      console.error('处理外部打开失败:', err);
+    }
+  });
+
   /* ---- 列表交互（事件委托） ---- */
   listEl.addEventListener('click', (e) => {
     // 组头：折叠/展开
@@ -109,9 +138,13 @@ export function initSidebar(videoApi, ctx) {
     } else if (header) {
       const g = +header.parentElement.dataset.g;
       const group = ctx.groups[g];
+      const label =
+        group && group.kind === 1
+          ? `删除单文件记录「${group ? group.name : ''}」（不删文件）`
+          : `删除整个文件夹记录「${group ? group.name : ''}」（不删文件）`;
       showMenu(menuEl, e, [
         {
-          label: `删除整个文件夹记录「${group ? group.name : ''}」（不删文件）`,
+          label,
           action: () =>
             deleteFolder(ctx, listEl, group ? group.path : '', videoApi, selBar, selCount),
         },
@@ -192,10 +225,13 @@ function renderList(listEl, ctx) {
     li.dataset.g = g;
 
     const header = document.createElement('div');
-    header.className = 'group-header';
+    header.className = 'group-header' + (group.kind === 1 ? ' file-group' : '');
     header.title = group.path;
+    // kind=1 单文件组：徽章显示"单文件"；普通文件夹显示视频数量
     header.innerHTML = `<span class="chev">${CHEV_SVG}</span>
-      <span class="gname"></span><span class="gcount">${group.videos.length}</span>`;
+      <span class="gname"></span><span class="gcount">${
+        group.kind === 1 ? '单文件' : group.videos.length
+      }</span>`;
     header.querySelector('.gname').textContent = group.name;
     li.appendChild(header);
 
@@ -222,6 +258,19 @@ function renderList(listEl, ctx) {
   });
   // 恢复当前播放高亮
   if (ctx.activeGroup >= 0) markActive(listEl, ctx.activeGroup, ctx.activeIdx);
+}
+
+/** 按文件路径定位并播放（外部打开/单文件打开后使用） */
+function playPath(ctx, path) {
+  outer: for (let g = 0; g < ctx.groups.length; g++) {
+    const vs = ctx.groups[g].videos;
+    for (let i = 0; i < vs.length; i++) {
+      if (vs[i].file_path === path) {
+        ctx.playAt(g, i);
+        break outer;
+      }
+    }
+  }
 }
 
 /** 更新单个条目的进度显示 */
@@ -299,7 +348,11 @@ function deleteFolder(ctx, listEl, folder, videoApi, selBar, selCount) {
   if (!folder) return;
   const g = ctx.groups.find((x) => x.path === folder);
   const n = g ? g.videos.length : 0;
-  if (!confirm(`删除文件夹记录「${g ? g.name : folder}」（含 ${n} 条视频记录）？\n仅删除记录，不会删除磁盘文件。`)) return;
+  const isFile = g && g.kind === 1;
+  const tip = isFile
+    ? `删除单文件记录「${g ? g.name : folder}」？\n仅删除记录，不会删除磁盘文件。`
+    : `删除文件夹记录「${g ? g.name : folder}」（含 ${n} 条视频记录）？\n仅删除记录，不会删除磁盘文件。`;
+  if (!confirm(tip)) return;
   // 当前播放在该文件夹内则停止跟踪，避免记录复活
   if (ctx.activeGroup >= 0 && ctx.groups[ctx.activeGroup] && ctx.groups[ctx.activeGroup].path === folder) {
     videoApi.stopTracking();

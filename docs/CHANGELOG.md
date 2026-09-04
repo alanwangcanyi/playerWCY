@@ -4,6 +4,21 @@
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
+2026-09-04 | v1.5.1 / 0025 | 修复：moov 在尾部的大 MP4 无法播放 | Rust / 新增 media_proto
+
+- 现象：378MB、moov atom 在文件尾部的 MP4（未 faststart 的下载/录制文件）在软件中无限加载，QuickTime 可正常播放
+- 根因：asset 协议不支持 HTTP Range 流式定位，WebKit 必须先读到尾部 moov 才能起播，大文件下失败
+- 修复：新增自定义 stream:// 协议（media_proto.rs），完整实现 Range/206/Content-Range/Accept-Ranges，按 8MB 分块响应（内存安全），suffix range（bytes=-N）支持读取尾部 moov；播放源全部切换到该协议
+- 测试：新增 Range 解析三种形态与边界、MIME 映射单测
+
+2026-09-04 | v1.5.0 / 0025 | 新增：组头吸顶 / 自定义倍速解耦 / 单文件入库 | 前端 + Rust
+
+- 组头吸顶：侧栏向下滚动时当前文件夹组头固定在顶部，随时点箭头收起、切换其他文件夹（CSS sticky）
+- 自定义倍速解耦：点预设按钮/快捷键 1-4 不再改写自定义输入框，自定义值独立记忆（pwcy-custom-rate），快捷键 5 随时重新应用；生效倍速为预设时按钮高亮，为自定义时输入框高亮
+- 单文件入库：①软件内新增"打开文件"按钮（单选视频/音频，独立成组）②（Finder 双击关联声明因当前 tauri 版本不支持复杂 Info.plist 结构暂缓，入口为软件内按钮）；组头显示"单文件"徽章；已在文件夹组的文件移入单文件组且进度保留（事务）；删除右键文案区分
+- 数据层：folders 表新增 kind 列（0=文件夹 1=单文件组），旧库自动迁移（ALTER TABLE）；新增 add_single_file（事务：folders upsert + videos 归组）；IPC 新增 add_single_file 命令；lib.rs 预留 RunEvent::Opened 处理（显示窗口 + emit open-file，待后续 tauri 升级启用 Finder 关联）
+- 测试：新增 single_file_group（入库/移动/进度保留/去重）
+
 2026-09-03 | v1.4.1 / 0024 | 修复：About 版本号滞后 | 配置
 
 - 根因：v1.0.0 之后迭代只更新 CHANGELOG 版本，漏改三处代码版本号，About 一直显示 1.0.0

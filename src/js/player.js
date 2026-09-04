@@ -172,7 +172,8 @@ export function initPlayer(ctx) {
     b.addEventListener('click', () => setRate(parseFloat(b.dataset.rate)));
   });
 
-  // 倍速：自定义输入（0.50 - 2.00，最多两位小数）
+  // 倍速：自定义输入（0.50 - 2.00，最多两位小数）；自定义值独立记忆（pwcy-custom-rate），
+  // 不随预设按钮/快捷键 1-4 改变，快捷键 5 随时可重新应用
   const applyRateInput = () => {
     const v = parseFloat(rateInput.value);
     if (isNaN(v) || v < 0.5 || v > 2.0) {
@@ -180,18 +181,22 @@ export function initPlayer(ctx) {
       rateInput.placeholder = '0.5-2.0';
       return;
     }
+    localStorage.setItem('pwcy-custom-rate', v.toFixed(2)); // 记忆自定义值
     setRate(Math.round(v * 100) / 100);
   };
   rateInput.addEventListener('change', applyRateInput);
-  // Enter：生效并失焦，空格/左右键立即恢复全局快捷键；Esc：放弃编辑（还原显示）并失焦
+  // 启动恢复：输入框显示上次的自定义值（与生效倍速解耦）
+  const savedCustom = parseFloat(localStorage.getItem('pwcy-custom-rate'));
+  if (!isNaN(savedCustom)) rateInput.value = savedCustom.toFixed(2);
+  // Enter：生效并失焦，空格/左右键立即恢复全局快捷键；Esc：放弃编辑（还原自定义值）并失焦
   rateInput.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== 'Escape') return;
     e.preventDefault();
     if (e.key === 'Enter') {
       applyRateInput();
     } else {
-      const applied = parseFloat(localStorage.getItem('pwcy-rate'));
-      rateInput.value = isNaN(applied) ? '' : applied.toFixed(2);
+      const custom = parseFloat(localStorage.getItem('pwcy-custom-rate'));
+      rateInput.value = isNaN(custom) ? '' : custom.toFixed(2);
     }
     rateInput.blur();
   });
@@ -243,7 +248,9 @@ export function initPlayer(ctx) {
     }
     save(true); // 切换前保存上一个
     current = { ...item };
-    video.src = convertFileSrc(item.file_path);
+    // 走自定义 stream:// 协议（Rust 端完整实现 HTTP Range）：
+    // asset 协议对 moov 在尾部的大 MP4 无法流式定位，会导致无限加载
+    video.src = 'stream://localhost/' + encodeURIComponent(item.file_path);
     errorTip.hidden = true; // 清除上一次的失败提示
     wrap.classList.add('playing');
     // 续播：有历史进度且未播完（>3 秒且 <98%）时跳到上次位置
@@ -271,16 +278,21 @@ export function initPlayer(ctx) {
     );
   }
 
-  /** 设置倍速（0.50-2.00，两位小数）：同步输入框、预设按钮高亮与记忆 */
+  /** 设置倍速（0.50-2.00，两位小数）：更新预设按钮高亮与记忆。
+   *  注意：不改动自定义输入框的值——自定义值只由用户输入/快捷键5改变，
+   *  保证预设与自定义互不干扰，快捷键 5 始终可用 */
   function setRate(rate) {
     const v = Math.round(Math.min(2.0, Math.max(0.5, rate)) * 100) / 100;
     video.playbackRate = v;
-    rateInput.value = v.toFixed(2);
-    rateInput.classList.add('current');
+    let isPreset = false;
     document.querySelectorAll('.btn-rate').forEach((b) => {
-      b.classList.toggle('active', parseFloat(b.dataset.rate) === v);
+      const hit = parseFloat(b.dataset.rate) === v;
+      if (hit) isPreset = true;
+      b.classList.toggle('active', hit);
     });
-    localStorage.setItem('pwcy-rate', v.toFixed(2)); // 记忆用户调整的倍速
+    // 生效倍速为预设 → 输入框不高亮；为自定义值 → 输入框高亮
+    rateInput.classList.toggle('current', !isPreset);
+    localStorage.setItem('pwcy-rate', v.toFixed(2)); // 记忆生效倍速
   }
 
   function currentRate() {

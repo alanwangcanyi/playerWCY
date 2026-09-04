@@ -11,11 +11,12 @@ pub struct VideoProgress {
     pub duration: f64,
 }
 
-/// 文件夹记录
+/// 文件夹记录（kind：0=文件夹，1=单文件组——Finder/软件内直接打开的单个视频）
 #[derive(Debug, Clone, Serialize)]
 pub struct FolderRecord {
     pub path: String,
     pub name: String,
+    pub kind: i64,
 }
 
 /// 初始化数据库连接并建表（含旧数据迁移）
@@ -39,9 +40,21 @@ pub fn init_db(app: &AppHandle) -> Result<Connection, Box<dyn std::error::Error>
             path           TEXT UNIQUE NOT NULL,
             name           TEXT NOT NULL,
             added_at       TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-            last_opened_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+            last_opened_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            kind           INTEGER NOT NULL DEFAULT 0
         );",
     )?;
+    // 旧库迁移：folders 表增加 kind 列（0=文件夹 1=单文件组）
+    let has_kind: bool = {
+        let mut stmt = conn.prepare("PRAGMA table_info(folders)")?;
+        let mut rows = stmt.query_map([], |r| r.get::<_, String>(1))?;
+        rows.any(|c| c.map(|c| c == "kind").unwrap_or(false))
+    };
+    if !has_kind {
+        conn.execute_batch(
+            "ALTER TABLE folders ADD COLUMN kind INTEGER NOT NULL DEFAULT 0;",
+        )?;
+    }
     // 一次性迁移：旧版本 videos 已有数据但 folders 为空时，从 folder_path 去重补建记录
     // （名称计算放 Rust 侧，避免复杂 SQL 出错）
     let paths: Vec<String> = {
@@ -82,14 +95,41 @@ pub fn folder_display_name(path: &str) -> String {
 
 /// 全部文件夹记录（按添加顺序）
 pub fn list_folders(conn: &Connection) -> Result<Vec<FolderRecord>, rusqlite::Error> {
-    let mut stmt = conn.prepare("SELECT path, name FROM folders ORDER BY id")?;
+    let mut stmt = conn.prepare("SELECT path, name, kind FROM folders ORDER BY id")?;
     let rows = stmt.query_map([], |row| {
         Ok(FolderRecord {
             path: row.get(0)?,
             name: row.get(1)?,
+            kind: row.get(2)?,
         })
     })?;
     rows.collect()
+}
+
+/// 单文件入库（Finder 双击/软件内"打开文件"）：folders 记 kind=1，
+/// 视频记录归属单文件组（folder_path = 文件路径本身）；已有进度不覆盖
+pub fn add_single_file(
+    conn: &Connection,
+    file_path: &str,
+    file_name: &str,
+) -> Result<(), rusqlite::Error> {
+    let tx = conn.unchecked_transaction()?;
+    // folders upsert：path=文件路径，kind=1，重复打开仅更新时间
+    tx.execute(
+        "INSERT INTO folders (path, name, kind) VALUES (?1, ?2, 1)
+         ON CONFLICT(path) DO UPDATE SET
+            kind = 1,
+            last_opened_at = datetime('now','localtime')",
+        params![file_path, file_name],
+    )?;
+    // 视频记录：不存在则插入；已存在（可能归属某文件夹组）则移入单文件组，进度保持
+    tx.execute(
+        "INSERT INTO videos (file_path, file_name, folder_path)
+         VALUES (?1, ?2, ?1)
+         ON CONFLICT(file_path) DO UPDATE SET folder_path = excluded.folder_path",
+        params![file_path, file_name],
+    )?;
+    tx.commit()
 }
 
 /// 某文件夹下的全部视频记录（file_path/file_name/position/duration/percent）
@@ -223,7 +263,8 @@ pub(crate) fn create_tables(conn: &Connection) -> Result<(), rusqlite::Error> {
             path           TEXT UNIQUE NOT NULL,
             name           TEXT NOT NULL,
             added_at       TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-            last_opened_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+            last_opened_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+            kind           INTEGER NOT NULL DEFAULT 0
         );",
     )?;
     Ok(())
@@ -307,5 +348,30 @@ mod tests {
         let rows = list_videos_by_folder(&conn, "/v").unwrap();
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].file_name, "c.mp4");
+    }
+
+    /// 单文件入库：kind=1 独立成组；已在文件夹组的文件移入单文件组且进度保留
+    #[test]
+    fn single_file_group() {
+        let conn = db();
+        touch_folder(&conn, "/v").unwrap();
+        ensure_video(&conn, "/v/x.mp4", "x.mp4", "/v").unwrap();
+        save_progress(&conn, "/v/x.mp4", "x.mp4", "/v", 40.0, 100.0).unwrap();
+
+        // 单文件打开：移入单文件组，进度不丢
+        add_single_file(&conn, "/v/x.mp4", "x.mp4").unwrap();
+        let folders = list_folders(&conn).unwrap();
+        let single = folders.iter().find(|f| f.path == "/v/x.mp4").unwrap();
+        assert_eq!(single.kind, 1);
+        assert_eq!(single.name, "x.mp4");
+        let rows = list_videos_by_folder(&conn, "/v/x.mp4").unwrap();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].position, 40.0);
+        // 原文件夹组不再包含该文件
+        assert!(list_videos_by_folder(&conn, "/v").unwrap().is_empty());
+
+        // 重复打开：不产生重复记录
+        add_single_file(&conn, "/v/x.mp4", "x.mp4").unwrap();
+        assert_eq!(list_folders(&conn).unwrap().len(), 2);
     }
 }

@@ -25,3 +25,4 @@
 [18:00] 完成：版本号同步机制三层落实（README 强制规则 + CHANGELOG 勾稽 + .claude/skills/version-sync 记录）
 [19:00] 进行：创建《编程agents规则.md》（沉淀本次开发全部规则，供以后发给 AI 复用）
 [21:00] 完成：按用户要求回滚 v1.4.2 隔离标记功能（git reset 至 ce8da4f，删除 0025 归档，恢复运行 0024/v1.4.1）
+[23:00] 进行：v1.5.1 修复 moov 尾部大文件播放——自定义 stream 协议完整实现 Range（替代 asset 协议）

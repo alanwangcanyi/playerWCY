@@ -12,8 +12,8 @@ pub struct VideoInfo {
     pub file_name: String,
 }
 
-/// 判断文件是否为支持的视频扩展名（大小写不敏感）
-fn is_video_ext(ext: &str) -> bool {
+/// 判断文件是否为支持的视频扩展名（大小写不敏感；单文件打开入库复用）
+pub fn is_video_ext(ext: &str) -> bool {
     VIDEO_EXTS.contains(&ext.to_ascii_lowercase().as_str())
 }
 

@@ -18,8 +18,10 @@ pub fn handle<R: tauri::Runtime>(
 ) -> Response<Vec<u8>> {
     let raw = request.uri().path(); // 形如 /%2FUsers%2Fwcy%2F...%2F2.mp4
     let decoded = percent_decode(raw);
-    // 解码后形如 /Users/wcy/...（前导斜杠 + 绝对路径），去掉第一个斜杠恢复绝对路径
-    let file_path = decoded.trim_start_matches('/').to_string();
+    // 解码后形如 //Users/wcy/...（path 自带前导斜杠 + 编码的绝对路径）
+    // 只去掉第一个斜杠恢复绝对路径：trim_start_matches 会把 // 全部去掉，
+    // 得到相对路径 Users/...，仅在进程 cwd 恰好为 / 时才能打开（从其他目录启动即 404）
+    let file_path = decoded.strip_prefix('/').unwrap_or(&decoded).to_string();
     serve_file(Path::new(&file_path), request.headers().get(header::RANGE))
 }
 

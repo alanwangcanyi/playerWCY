@@ -63,13 +63,13 @@ export function initSidebar(videoApi, ctx) {
     }
   });
 
-  // 打开文件 = 单个视频/音频独立成组入库（不扫描其所在文件夹），并定位播放
+  // 打开文件 = 单个视频独立成组入库（不扫描其所在文件夹），并定位播放
   document.getElementById('btn-open-file').addEventListener('click', async () => {
     try {
       const file = await open({
         multiple: false,
-        title: '选择视频/音频文件',
-        filters: [{ name: '视频/音频', extensions: ['mp4', 'mov', 'm4v', 'webm', 'mkv', 'avi'] }],
+        title: '选择视频文件',
+        filters: [{ name: '视频', extensions: ['mp4', 'mov', 'm4v', 'webm', 'mkv', 'avi'] }],
       });
       if (!file) return; // 用户取消
       await invoke('add_single_file', { filePath: file });

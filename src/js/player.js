@@ -72,7 +72,10 @@ export function initPlayer(ctx) {
       video.currentTime = pendingResume;
       pendingResume = null;
     }
-    video.playbackRate = currentRate();
+    // 恢复生效倍速（pwcy-rate）：不能用 currentRate()（读自定义输入框值），
+    // 否则预设生效中换源会被输入框残留的自定义值覆盖（如 2x 播放切集后回 1.25x）
+    const r = parseFloat(localStorage.getItem('pwcy-rate'));
+    video.playbackRate = isNaN(r) ? 1.0 : r;
     save(true);
   });
 
@@ -293,11 +296,6 @@ export function initPlayer(ctx) {
     // 生效倍速为预设 → 输入框不高亮；为自定义值 → 输入框高亮
     rateInput.classList.toggle('current', !isPreset);
     localStorage.setItem('pwcy-rate', v.toFixed(2)); // 记忆生效倍速
-  }
-
-  function currentRate() {
-    const v = parseFloat(rateInput.value);
-    return isNaN(v) ? 1.0 : v;
   }
 
   /** 保存进度到 SQLite；返回 Promise（关闭窗口时需 await 确保写入完成）；

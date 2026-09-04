@@ -189,6 +189,9 @@ export function initSidebar(videoApi, ctx) {
       }
     }
   });
+
+  // 虚拟吸顶：滚动时顶部显示当前所属文件夹条，点击可随时收起/展开
+  listEl.addEventListener('scroll', () => updateSticky(listEl, ctx), { passive: true });
 }
 
 /* ---- 库加载与渲染 ---- */
@@ -256,8 +259,71 @@ function renderList(listEl, ctx) {
     li.appendChild(ul);
     listEl.appendChild(li);
   });
+  buildSticky(listEl, ctx);
   // 恢复当前播放高亮
   if (ctx.activeGroup >= 0) markActive(listEl, ctx.activeGroup, ctx.activeIdx);
+}
+
+/* ---- 虚拟吸顶（组头吸附） ---- */
+
+/** 当前吸顶条元素 */
+let stickyEl = null;
+
+/** 创建吸顶条（列表第一个子元素，sticky 最可靠形态），点击 = 收起/展开当前顶部组 */
+function buildSticky(listEl, ctx) {
+  stickyEl = document.createElement('li');
+  stickyEl.className = 'group-header sticky-ghost';
+  stickyEl.hidden = true;
+  stickyEl.title = '点击收起/展开当前文件夹';
+  stickyEl.innerHTML = `<span class="chev">${CHEV_SVG}</span>
+    <span class="gname"></span><span class="gcount"></span>`;
+  stickyEl.addEventListener('click', () => {
+    const g = stickyEl.dataset.g;
+    const li = listEl.querySelector(`.folder-group[data-g="${g}"]`);
+    if (li) {
+      toggleCollapse(li, loadCollapsed());
+      updateSticky(listEl, ctx);
+    }
+  });
+  listEl.insertBefore(stickyEl, listEl.firstChild);
+  updateSticky(listEl, ctx);
+}
+
+/** 滚动时更新吸顶条：显示列表顶部当前所属的文件夹；真实组头可见时隐藏避免重叠 */
+function updateSticky(listEl, ctx) {
+  if (!stickyEl) return;
+  const listTop = listEl.getBoundingClientRect().top;
+  let current = null;
+  let header = null;
+  // 找第一个尚未完全滚出顶部的组（即当前占据列表顶部的组）
+  for (const li of listEl.querySelectorAll('.folder-group')) {
+    if (li.getBoundingClientRect().bottom > listTop + 1) {
+      current = li;
+      header = li.querySelector('.group-header');
+      break;
+    }
+  }
+  if (!current || !header) {
+    stickyEl.hidden = true;
+    return;
+  }
+  // 组头自身还可见（未滚过顶）→ 不显示吸顶条
+  if (header.getBoundingClientRect().bottom > listTop + 2) {
+    stickyEl.hidden = true;
+    return;
+  }
+  const g = +current.dataset.g;
+  const group = ctx.groups[g];
+  if (!group) {
+    stickyEl.hidden = true;
+    return;
+  }
+  stickyEl.dataset.g = g;
+  stickyEl.querySelector('.gname').textContent = group.name;
+  stickyEl.querySelector('.gcount').textContent =
+    group.kind === 1 ? '单文件' : group.videos.length;
+  stickyEl.classList.toggle('st-collapsed', current.classList.contains('collapsed'));
+  stickyEl.hidden = false;
 }
 
 /** 按文件路径定位并播放（外部打开/单文件打开后使用） */

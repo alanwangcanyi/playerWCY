@@ -156,6 +156,10 @@ export function initPlayer(ctx) {
     if (d > 0) video.currentTime = (seekBar.value / 1000) * d;
     seeking = false;
   });
+  // 松手/取消时无条件复位：WKWebView 下点击位置与当前值相同时不派发 change，
+  // 仅靠 change 复位会让 seeking 永久为 true，圆点卡住不再跟随播放进度
+  seekBar.addEventListener('pointerup', () => (seeking = false));
+  seekBar.addEventListener('pointercancel', () => (seeking = false));
 
   // 音量 = 系统音量（双向同步）：软件内不再衰减，video.volume 恒为 1.0
   video.volume = 1.0;

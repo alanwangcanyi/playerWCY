@@ -1,5 +1,7 @@
 // 侧边栏：文件夹分组树（可折叠）、勾选多选、右键菜单删除记录、打开文件夹刷新
 // 无 bundler：通过 withGlobalTauri 注入的 window.__TAURI__ 访问 API
+// Android（window.__PW_ANDROID）：数据源为 SAF + localStorage（pwcy-android-lib），
+// 播放地址为本地 HTTP（127.0.0.1:18899），不经 Rust SQLite/scan_folder 链路
 import { dialogAlert, dialogConfirm } from './dialog.js';
 
 const { open } = window.__TAURI__.dialog;
@@ -50,8 +52,12 @@ export function initSidebar(videoApi, ctx) {
   // 启动：纯读 SQLite 记录（不扫磁盘）
   reload(ctx, listEl).catch((e) => console.error('加载库失败:', e));
 
-  // 打开文件夹 = 添加/刷新（扫描入库后整库重载）
+  // 打开文件夹 = 添加/刷新（扫描入库后整库重载）；Android = SAF 选择目录
   btn.addEventListener('click', async () => {
+    if (window.__PW_ANDROID) {
+      window.NativeBridge.pickFolder();
+      return;
+    }
     try {
       const dir = await open({ directory: true, title: '选择视频文件夹' });
       if (!dir) return; // 用户取消
@@ -62,6 +68,21 @@ export function initSidebar(videoApi, ctx) {
       dialogAlert('打开文件夹失败：' + e);
     }
   });
+
+  /* ---- Android：SAF 选择结果回调 + 启动恢复（目录授权已持久化） ---- */
+  if (window.__PW_ANDROID) {
+    window.__safPicked = (r) => {
+      if (!r.ok) {
+        dialogAlert('打开文件夹失败：' + r.error);
+        return;
+      }
+      localStorage.setItem('pwcy-android-lib', JSON.stringify({ dir: r.dir, items: r.items }));
+      reload(ctx, listEl).catch((e) => console.error('Android 库加载失败:', e));
+    };
+    if (window.NativeBridge.hasFolder()) {
+      window.NativeBridge.listSaved(); // 回调走 __safPicked，刷新列表
+    }
+  }
 
   // 打开文件 = 单个视频独立成组入库（不扫描其所在文件夹），并定位播放
   document.getElementById('btn-open-file').addEventListener('click', async () => {
@@ -157,23 +178,11 @@ export function initSidebar(videoApi, ctx) {
   // 点击其他地方关闭菜单
   document.addEventListener('click', () => hideMenu(menuEl));
 
-  // 底部多选操作条
-  document.getElementById('btn-del-sel').addEventListener('click', async () => {
+  // 底部多选操作条（复用 deleteVideos：含确认弹窗与 Android/localStorage 分支）
+  document.getElementById('btn-del-sel').addEventListener('click', () => {
     const paths = [...selected];
     if (!paths.length) return;
-    const ok = await dialogConfirm(
-      `删除所选 ${paths.length} 条记录？\n仅删除记录，不会删除文件。`,
-      '删除确认'
-    );
-    if (!ok) return;
-    stopIfPlaying(ctx, videoApi, paths);
-    invoke('remove_videos', { paths })
-      .then(() => {
-        selected.clear();
-        return reload(ctx, listEl);
-      })
-      .then(() => updateSelBar(selBar, selCount))
-      .catch((e) => dialogAlert('删除失败：' + e));
+    deleteVideos(ctx, listEl, paths, videoApi, selBar, selCount);
   });
   document.getElementById('btn-cancel-sel').addEventListener('click', clearSelection);
 
@@ -189,6 +198,10 @@ export function initSidebar(videoApi, ctx) {
           duration > 0
             ? Math.min(100, Math.max(0, Math.round((position / duration) * 1000) / 10))
             : 0;
+        // Android：进度按 docId 存 localStorage（无 SQLite 链路）
+        if (window.__PW_ANDROID && v.doc_id) {
+          localStorage.setItem('pwcy-ap-' + v.doc_id, JSON.stringify({ position, duration }));
+        }
         const el = listEl.querySelector(`.video-item[data-path="${cssEscape(filePath)}"]`);
         updateItemEl(el, v);
         break outer;
@@ -202,8 +215,67 @@ export function initSidebar(videoApi, ctx) {
 
 /* ---- 库加载与渲染 ---- */
 
-/** 从 SQLite 重载全部文件夹分组并渲染 */
+/** Android：读取 SAF 库（localStorage）组装 ctx.groups，进度按 docId 关联 */
+function androidReload(ctx) {
+  let lib = null;
+  try {
+    lib = JSON.parse(localStorage.getItem('pwcy-android-lib') || 'null');
+  } catch {
+    lib = null;
+  }
+  ctx.groups = [];
+  if (lib && lib.items && lib.items.length) {
+    const videos = lib.items.map((it) => {
+      let position = 0;
+      let duration = 0;
+      try {
+        const p = JSON.parse(localStorage.getItem('pwcy-ap-' + it.id) || 'null');
+        if (p) {
+          position = p.position || 0;
+          duration = p.duration || 0;
+        }
+      } catch {
+        /* 进度损坏按无进度处理 */
+      }
+      const percent =
+        duration > 0
+          ? Math.min(100, Math.max(0, Math.round((position / duration) * 1000) / 10))
+          : 0;
+      return {
+        file_path: it.url, // Android：file_path 即本地 HTTP 可播 URL（player.js 直接用作 video.src）
+        file_name: it.name,
+        doc_id: it.id,
+        folder_path: 'android-saf',
+        position,
+        duration,
+        percent,
+      };
+    });
+    ctx.groups.push({ path: 'android-saf', name: lib.dir || '视频', kind: 0, videos });
+  }
+}
+
+/** 从 SQLite 重载全部文件夹分组并渲染；Android 走 SAF/localStorage 数据源 */
 async function reload(ctx, listEl) {
+  if (window.__PW_ANDROID) {
+    androidReload(ctx);
+    ctx.activeGroup = -1;
+    ctx.activeIdx = -1;
+    if (ctx.activePath) {
+      outer: for (let g = 0; g < ctx.groups.length; g++) {
+        const vs = ctx.groups[g].videos;
+        for (let i = 0; i < vs.length; i++) {
+          if (vs[i].file_path === ctx.activePath) {
+            ctx.activeGroup = g;
+            ctx.activeIdx = i;
+            break outer;
+          }
+        }
+      }
+    }
+    renderList(listEl, ctx);
+    return;
+  }
   ctx.groups = await invoke('list_library');
   // 播放身份 = file_path：删除/刷新后按路径重算分组索引，防止索引偏移
   // 导致高亮错位或"播完下集"切错目标
@@ -404,6 +476,23 @@ function hideMenu(menuEl) {
 }
 
 /* ---- 删除记录（不删磁盘文件） ---- */
+/** Android：从 SAF 库（localStorage）移除条目；paths=null 删除整个目录 */
+function androidRemove(paths) {
+  if (paths === null) {
+    localStorage.removeItem('pwcy-android-lib');
+    return;
+  }
+  try {
+    const lib = JSON.parse(localStorage.getItem('pwcy-android-lib') || 'null');
+    if (lib && lib.items) {
+      lib.items = lib.items.filter((it) => !paths.includes(it.url));
+      localStorage.setItem('pwcy-android-lib', JSON.stringify(lib));
+    }
+  } catch (e) {
+    console.error('Android 删除失败:', e);
+  }
+}
+
 async function deleteVideos(ctx, listEl, paths, videoApi, selBar, selCount) {
   if (!paths.length) return;
   const ok = await dialogConfirm(
@@ -411,14 +500,20 @@ async function deleteVideos(ctx, listEl, paths, videoApi, selBar, selCount) {
     '删除确认'
   );
   if (!ok) return;
-  stopIfPlaying(ctx, videoApi, paths);
-  invoke('remove_videos', { paths })
-    .then(() => {
-      paths.forEach((p) => selected.delete(p));
-      return reload(ctx, listEl);
-    })
-    .then(() => updateSelBar(selBar, selCount))
-    .catch((e) => dialogAlert('删除失败：' + e));
+  if (window.__PW_ANDROID) {
+    androidRemove(paths);
+  } else {
+    stopIfPlaying(ctx, videoApi, paths);
+    try {
+      await invoke('remove_videos', { paths });
+    } catch (e) {
+      dialogAlert('删除失败：' + e);
+      return;
+    }
+  }
+  paths.forEach((p) => selected.delete(p));
+  await reload(ctx, listEl);
+  updateSelBar(selBar, selCount);
 }
 
 async function deleteFolder(ctx, listEl, folder, videoApi, selBar, selCount) {
@@ -437,13 +532,19 @@ async function deleteFolder(ctx, listEl, folder, videoApi, selBar, selCount) {
     ctx.activeIdx = -1;
     ctx.activePath = '';
   }
-  invoke('remove_folder', { folder })
-    .then(() => {
-      (g ? g.videos : []).forEach((v) => selected.delete(v.file_path));
-      return reload(ctx, listEl);
-    })
-    .then(() => updateSelBar(selBar, selCount))
-    .catch((e) => dialogAlert('删除失败：' + e));
+  if (window.__PW_ANDROID) {
+    androidRemove(null);
+  } else {
+    try {
+      await invoke('remove_folder', { folder });
+    } catch (e) {
+      dialogAlert('删除失败：' + e);
+      return;
+    }
+  }
+  (g ? g.videos : []).forEach((v) => selected.delete(v.file_path));
+  await reload(ctx, listEl);
+  updateSelBar(selBar, selCount);
 }
 
 /** 若正在播放的条目被删除，停止进度跟踪（防止自动保存把记录写回来） */

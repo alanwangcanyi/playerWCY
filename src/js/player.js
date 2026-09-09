@@ -257,9 +257,13 @@ export function initPlayer(ctx) {
     current = { ...item };
     // 走自定义 stream 协议（Rust 端完整实现 HTTP Range）：
     // asset 协议对 moov 在尾部的大 MP4 无法流式定位，会导致无限加载。
-    // convertFileSrc 按平台生成正确形式：macOS/Linux=stream://localhost/...，
-    // Android(WKWebView→WebViewAssetLoader)=http://stream.localhost/...
-    video.src = convertFileSrc(item.file_path, 'stream');
+    // macOS：convertFileSrc 生成 stream://localhost/...；
+    // Android：媒体请求绕过 wry 拦截层（协议不可用），file_path 已是本地 HTTP 可播 URL，直接用
+    if (window.__PW_ANDROID) {
+      video.src = item.file_path;
+    } else {
+      video.src = convertFileSrc(item.file_path, 'stream');
+    }
     errorTip.hidden = true; // 清除上一次的失败提示
     wrap.classList.add('playing');
     // 续播：有历史进度且未播完（>3 秒且 <98%）时跳到上次位置
@@ -305,8 +309,10 @@ export function initPlayer(ctx) {
   }
 
   /** 保存进度到 SQLite；返回 Promise（关闭窗口时需 await 确保写入完成）；
-   *  force=true 立即保存，否则按 SAVE_INTERVAL 节流 */
+   *  force=true 立即保存，否则按 SAVE_INTERVAL 节流。
+   *  Android：进度由 sidebar 的 onProgress 回调存 localStorage，此处跳过 */
   function save(force) {
+    if (window.__PW_ANDROID) return Promise.resolve();
     if (!current || !video.duration) return Promise.resolve();
     const now = Date.now();
     if (!force && now - lastSaveAt < SAVE_INTERVAL) return Promise.resolve();

@@ -6,7 +6,11 @@
 import { initSidebar, clearSelection } from './sidebar.js';
 import { initPlayer } from './player.js';
 import { initKeyboard } from './keyboard.js';
-import { dialogAlert } from './dialog.js';
+
+/* ---- Android 平台标记：必须在 initPlayer/initSidebar 之前设置 ----
+ *  （sidebar.js 初始化时按此 flag 注册 SAF 回调与启动恢复，晚了会整段跳过） */
+const IS_ANDROID = /android/i.test(navigator.userAgent) && !!window.NativeBridge;
+if (IS_ANDROID) window.__PW_ANDROID = true;
 
 const ctx = {
   groups: [],
@@ -55,58 +59,9 @@ speedGroup.classList.toggle('no-hotkeys', !hotkeysToggle.checked);
 
 /* ---- Android 专属：横屏方向反转（MainActivity 注入的 NativeBridge 桥，不随重力） ---- */
 const btnRotate = document.getElementById('btn-rotate');
-if (/android/i.test(navigator.userAgent) && window.NativeBridge) {
+if (IS_ANDROID) {
   btnRotate.hidden = false;
   btnRotate.addEventListener('click', () => window.NativeBridge.rotate());
-}
-
-/* ---- Android 专属：SAF 探针（选文件夹/列视频/stream 播放，验证重启持久化） ----
- *  旧"打开文件夹/打开文件"按钮在 Android 上隐藏（系统选择器链路不通，避免误点无反应） */
-const safProbe = document.getElementById('saf-probe');
-if (/android/i.test(navigator.userAgent) && window.NativeBridge) {
-  document.querySelector('.open-actions').style.display = 'none';
-  safProbe.hidden = false;
-  document.getElementById('btn-saf-pick').addEventListener('click', () => {
-    document.getElementById('player').pause();
-    window.NativeBridge.pickFolder();
-  });
-  document.getElementById('btn-saf-saved').addEventListener('click', () => {
-    // 点击立即变字：证明 JS listener 已执行（若没变说明前端绑定崩了）
-    const b = document.getElementById('btn-saf-saved');
-    b.textContent = '已触发…';
-    document.getElementById('player').pause();
-    window.NativeBridge.playFirst();
-  });
-  window.__safProbe = (r) => {
-    if (!r.ok) {
-      dialogAlert('SAF 探针失败：' + r.error);
-      return;
-    }
-    if (r.mode === 'stage') {
-      dialogAlert('阶段：' + r.msg);
-      return;
-    }
-    if (r.mode === 'play') {
-      // 探针二期：cache 真实路径 → stream 协议（验证自定义协议在 Android WebView 可用）
-      const { convertFileSrc } = window.__TAURI__.core;
-      const v = document.getElementById('player');
-      const url = convertFileSrc(r.path, 'stream');
-      v.onerror = () => {
-        dialogAlert(
-          'video 错误 code=' + (v.error ? v.error.code : '?') + ' ' + (v.error ? v.error.message : '')
-        );
-        v.onerror = null;
-      };
-      v.src = url;
-      v.play().catch((e) => dialogAlert('play() 被拒：' + e));
-      v.addEventListener(
-        'loadeddata',
-        () => dialogAlert('stream 协议播放成功 ✓'),
-        { once: true }
-      );
-      return;
-    }
-    const names = r.items.slice(0, 5).map((v) => v.name).join('\n');
-    dialogAlert(`SAF 探针成功：找到 ${r.count} 个视频\n${names}${r.count > 5 ? '\n…' : ''}`);
-  };
+  // 单文件入口暂不支持（需 OPEN_DOCUMENT 单选+持久化，列入后续计划）
+  document.getElementById('btn-open-file').style.display = 'none';
 }

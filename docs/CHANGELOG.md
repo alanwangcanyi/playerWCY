@@ -4,6 +4,14 @@
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
+2026-09-09 | v1.7.1 / 0033 | 新增：Android 正式播放链路（方案 A） | Android + 前端
+
+- MediaServer.kt：纯 Kotlin 手写本地 HTTP 服务（127.0.0.1:18899），SAF content:// 文档 → video 回环供流，完整 Range/206（start-end/start-/suffix，对齐 Rust media_proto 语义）；零外部依赖（NanoHTTPD 依赖在本环境不进 Kotlin classpath，模块依赖与 libs jar 均失效，已记录）
+- 数据链路：SAF 选目录（持久授权）→ 列表存 localStorage（pwcy-android-lib，docId 身份+HTTP 可播 URL）→ 侧栏完整复用（renderList/多选/删除/吸顶/续播进度 localStorage 存储）；启动自动恢复（hasFolder→listSaved）
+- 前端平台分支：__PW_ANDROID 标记必须在 initPlayer/initSidebar 之前设置（否则 SAF 回调注册被跳过）；player.js load 走本地 HTTP URL、save 走 localStorage；删除操作走 localStorage 分支
+- 排障记录：gradle 配置缓存/Kotlin daemon 均非根因，新增外部依赖始终不进 Kotlin classpath（androidx 正常），最终以零依赖方案绕过；编辑工具出现"报成功实际未写入"的静默丢失，python 断言核验修复
+- 验证（CDP 自动化）：侧栏 75 条目恢复、2709 秒视频 readyState=4 正常播放、duration 流式读取成功
+
 2026-09-09 | v1.7.0 / 0031-0032 | 新增：Android 平台首版（探针里程碑） | Rust + 前端 + Android 工程
 
 - 平台：Tauri 2 同一代码库双平台（macOS + Android arm64），真机 Xiaomi 17 Pro Max 验证通过

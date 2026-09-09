@@ -28,7 +28,7 @@
 | 8 | SAF 探针：content URI 直接播放 | 已完成 | **结论：WebView video 不支持 content://（失败，符合预期）** |
 | 9 | SAF 探针：复制缓存 + stream 协议播放验证 | 已完成 | **结论：失败——Android WebView 媒体请求绕过 shouldInterceptRequest（wry 协议挂载点），自定义协议无法喂 video（CDP Network 证实请求未发出，error code=4）** |
 | 10 | 【验收关卡 1】SAF/播放链路判定 | 已完成 | **判定：stream 协议路线不可行；推荐方案 A（Kotlin 本地 HTTP 服务，NanoHTTPD，直接桥 ContentResolver 流，支持 Range，无需复制）** |
-| 11 | 正式接入：Kotlin HTTP 服务 + SAF 目录持久化 + 列表写入 SQLite + ctx.groups/renderList + videoApi.load | 未开始 | 方案 A |
+| 11 | 正式接入：Kotlin HTTP 服务 + SAF 目录持久化 + 侧栏数据链路 + 播放 | 已完成 | MediaServer.kt 纯 Kotlin 手写（NanoHTTPD 依赖在本环境不进 classpath，改零依赖）；CDP 验证：75 条目恢复+2709s 视频播放成功（Range/206 通） |
 | 12 | 【验收关卡 2】播放探针：moov 尾部大文件、拖进度、切后台恢复、倍速 | 未开始 | |
 | 13 | 移动端 UI 适配：媒体库页→播放页、长按菜单、底部控制、触摸目标、安全区 | 未开始 | 总监评审第 3 条 |
 | 14 | release APK 签名 + 版本号 versionCode + 归档规则扩展 | 未开始 | |

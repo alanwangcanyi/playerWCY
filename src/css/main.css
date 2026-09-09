@@ -106,10 +106,8 @@ body {
 /* ===== 左侧导航 ===== */
 /* 两个入口按钮：主（打开文件夹，品牌色）+ 次（打开文件，ghost），并排等宽 */
 .open-actions { display: flex; gap: 8px; margin: 12px 12px 0; }
-/* 防止 flex 覆盖 hidden 属性（否则 SAF 探针按钮在 macOS 也会显示） */
+/* 防止 flex 覆盖 hidden 属性（否则隐藏的入口按钮组会意外显示） */
 .open-actions[hidden] { display: none !important; }
-/* Android SAF 探针按钮：edge-to-edge 全屏下侧栏顶部被状态栏遮挡，下移避让 */
-#saf-probe { margin-top: 44px; }
 #btn-open-folder {
   flex: 1;
   padding: 10px;

@@ -27,6 +27,7 @@ playerWCY/
 │   ├── BUILD.md                 编译与归档流程（含环境要求）
 │   ├── FEATURES.md              产品功能全量清单（后续优化输入基线）
 │   ├── FEATURES_REVIEW.md       FEATURES 功能清单对应的架构审查结论
+│   ├── PLAN.md                  开发计划：新需求先建任务表，状态实时更新（未开始/进行中/已完成）
 │   └── CHANGELOG.md             变更记录（每次修改追加一条）
 ├── src/                         前端（Web，无框架）
 │   ├── index.html               界面结构：侧边栏 + 播放区 + 控制栏

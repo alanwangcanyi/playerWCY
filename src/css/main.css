@@ -584,6 +584,22 @@ button svg,
 /* A5：沉浸模式隐藏控制栏（点击视频区切换） */
 #controls.hidden-controls { display: none !important; }
 
+/* B1：隐藏音量组（Android 跟随系统音量，硬件键控制） */
+.android .volume-group { display: none; }
+/* B2：去掉"倍速"文字标签 */
+.android .speed-group .label { display: none; }
+/* B3：快退/快进按钮只留图标（去掉 5s 字样） */
+.android #btn-back span,
+.android #btn-fwd span { display: none; }
+/* B4：控制栏按钮单排化 + 紧凑化（Android 隐藏项多，一排可容纳） */
+.android #btn-row { flex-wrap: nowrap; }
+.android #controls { padding: 6px 10px 8px; }
+.android #btn-row { margin-top: 6px; gap: 6px; }
+.android .btn-group { gap: 5px; }
+.android #btn-row button { padding: 5px 9px; font-size: 12px; }
+/* B5：收侧栏按钮下移避让状态栏（原 top:14 被系统栏遮挡导致点击无效） */
+.android #btn-toggle-sidebar { top: 48px; }
+
 /* A4：模式切换半透明 toast（自动淡出，非模态） */
 .mode-toast {
   position: fixed;

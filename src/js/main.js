@@ -42,7 +42,8 @@ function applySidebar(hidden) {
   if (hidden) clearSelection();
 }
 
-btnToggle.addEventListener('click', () => {
+btnToggle.addEventListener('click', (e) => {
+  e.stopPropagation(); // B5：阻止冒泡到 video-wrap（Android 上会误触沉浸模式切换）
   const hidden = !appEl.classList.contains('sidebar-hidden');
   localStorage.setItem('pwcy-sidebar-hidden', hidden ? '1' : '0');
   applySidebar(hidden);

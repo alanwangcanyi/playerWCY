@@ -1,5 +1,7 @@
 // Tauri 命令层：前后端唯一桥接（对应架构图中的 IPC）
-use crate::{db, folder, volume, AppState};
+use crate::{db, folder, AppState};
+#[cfg(target_os = "macos")]
+use crate::volume;
 use serde::Serialize;
 use tauri::State;
 
@@ -154,29 +156,54 @@ pub fn save_progress(
         .map_err(|e| e.to_string())
 }
 
-/// 读取系统音量（0.0-1.0）
+/// 读取系统音量（0.0-1.0）。
+/// Android：无 CoreAudio，WebView 播放音量天然跟随系统媒体音量（硬件键控制），
+/// 返回固定占位值；移动端 UI 阶段音量条另行处理
 #[tauri::command]
 pub fn get_system_volume() -> f32 {
-    volume::get_system_volume()
+    #[cfg(target_os = "macos")]
+    {
+        volume::get_system_volume()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        0.75
+    }
 }
 
-/// 设置系统音量（0.0-1.0）
+/// 设置系统音量（0.0-1.0）。Android：空操作（音量由系统硬件键控制）
 #[tauri::command]
 pub fn set_system_volume(volume: f64) {
-    volume::set_system_volume(volume as f32);
+    #[cfg(target_os = "macos")]
+    {
+        volume::set_system_volume(volume as f32);
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = volume;
+    }
 }
 
-/// 在 Finder 中显示文件（macOS open -R：打开访达并定位选中该文件）
+/// 在 Finder 中显示文件（macOS open -R：打开访达并定位选中该文件）。
+/// Android：不支持，前端弹提示
 #[tauri::command]
 pub fn reveal_in_finder(file_path: String) -> Result<(), String> {
-    let path = std::path::Path::new(&file_path);
-    if !path.exists() {
-        return Err(format!("文件不存在，可能已被移动或删除：{}", file_path));
+    #[cfg(target_os = "macos")]
+    {
+        let path = std::path::Path::new(&file_path);
+        if !path.exists() {
+            return Err(format!("文件不存在，可能已被移动或删除：{}", file_path));
+        }
+        std::process::Command::new("open")
+            .arg("-R")
+            .arg(&file_path)
+            .spawn()
+            .map(|_| ())
+            .map_err(|e| format!("打开 Finder 失败: {}", e))
     }
-    std::process::Command::new("open")
-        .arg("-R")
-        .arg(&file_path)
-        .spawn()
-        .map(|_| ())
-        .map_err(|e| format!("打开 Finder 失败: {}", e))
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = file_path;
+        Err("此平台不支持在文件管理器中定位文件".to_string())
+    }
 }

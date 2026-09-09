@@ -51,3 +51,10 @@ function applyRateHotkeys(on) {
 hotkeysToggle.addEventListener('change', () => applyRateHotkeys(hotkeysToggle.checked));
 hotkeysToggle.checked = localStorage.getItem('pwcy-rate-hotkeys') !== '0';
 speedGroup.classList.toggle('no-hotkeys', !hotkeysToggle.checked);
+
+/* ---- Android 专属：横屏方向反转（MainActivity 注入的 NativeRotate 桥，不随重力） ---- */
+const btnRotate = document.getElementById('btn-rotate');
+if (/android/i.test(navigator.userAgent) && window.NativeRotate) {
+  btnRotate.hidden = false;
+  btnRotate.addEventListener('click', () => window.NativeRotate.rotate());
+}

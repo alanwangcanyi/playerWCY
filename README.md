@@ -42,7 +42,8 @@ playerWCY/
 │   ├── build.rs                 tauri-build 构建脚本
 │   ├── tauri.conf.json          打包配置：窗口、asset 协议、bundle 目标(app/dmg)
 │   ├── capabilities/default.json 权限声明（dialog 等）
-│   ├── icons/                   应用图标（由 scripts/gen_icons.sh 生成）
+│   ├── gen/android/              Android 工程（tauri android init 生成，含横屏配置与 NativeRotate 桥）
+│   ├── icons/                   应用图标（由 scripts/gen_icons.sh 生成；cargo tauri icon 生成 Android mipmap）
 │   └── src/
 │       ├── main.rs              进程入口
 │       ├── lib.rs               应用入口：注册插件、初始化 SQLite、挂载命令、启动音量监听

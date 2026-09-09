@@ -255,9 +255,11 @@ export function initPlayer(ctx) {
     }
     save(true); // 切换前保存上一个
     current = { ...item };
-    // 走自定义 stream:// 协议（Rust 端完整实现 HTTP Range）：
-    // asset 协议对 moov 在尾部的大 MP4 无法流式定位，会导致无限加载
-    video.src = 'stream://localhost/' + encodeURIComponent(item.file_path);
+    // 走自定义 stream 协议（Rust 端完整实现 HTTP Range）：
+    // asset 协议对 moov 在尾部的大 MP4 无法流式定位，会导致无限加载。
+    // convertFileSrc 按平台生成正确形式：macOS/Linux=stream://localhost/...，
+    // Android(WKWebView→WebViewAssetLoader)=http://stream.localhost/...
+    video.src = convertFileSrc(item.file_path, 'stream');
     errorTip.hidden = true; // 清除上一次的失败提示
     wrap.classList.add('playing');
     // 续播：有历史进度且未播完（>3 秒且 <98%）时跳到上次位置

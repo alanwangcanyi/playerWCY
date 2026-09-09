@@ -4,12 +4,27 @@
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
+2026-09-09 | v1.7.0 / 0031-0032 | 新增：Android 平台首版（探针里程碑） | Rust + 前端 + Android 工程
+
+- 平台：Tauri 2 同一代码库双平台（macOS + Android arm64），真机 Xiaomi 17 Pro Max 验证通过
+- 平台隔离：coreaudio-sys 移入 macOS target 专属依赖；volume 模块/Finder 命令/音量 IPC 按平台条件编译（Android 音量走系统媒体流，get 返回占位值、set 空操作；Finder 定位返回不支持提示）
+- 前端：播放源改 convertFileSrc(path,'stream') 按平台生成正确协议形式（macOS=stream://localhost/...，Android=http://stream.localhost/...）
+- Android 工程：gen/android（AGP 8.11/gradle 8.14.3），Manifest 固定 screenOrientation=landscape（不随重力）；MainActivity 注入 NativeRotate JS 桥，控制栏新增反转按钮（仅 Android 显示，手动切换横屏 0°/180°）
+- 图标：cargo tauri icon 从同源 icon.png 生成 Android 全密度 mipmap（与 macOS 图标一致）
+- 环境适配记录（构建链路四层问题）：rustup 镜像缺包→手动安装官方 rust-std；NDK/SDK 组件自动安装被沙盒拦→手动解压/Studio 安装（compileSdkVersion=android-36.1、buildTools 35.0.1 显式适配）；gradle 回调 CLI 的 WS 拒连→cargo 安装 Rust 版 tauri-cli + 脱离式后台进程；Rust 库缺 mobile_entry_point 宏→已补（lib.rs cfg_attr(mobile,...)）
+- 已知限制（探针阶段）：打开文件夹/文件的系统选择器返回 content:// URI 与真实路径链路不通（SAF 探针待做）；界面为桌面布局未做移动端适配；dmg 打包仍被沙盒拦截
+- 无线调试：adb 配对一次后 mDNS 自动重连（10.193.1.237）
+
 2026-09-04 | v1.6.2 / 0029 | 修复：进度条圆点卡死不跟随播放 | 前端
 
 - 现象：进度条紫色圆点长时间停在点击位置不动，视频照常播放，两者偏差越来越大（高倍速下观感更明显，易误判为变速问题）
+
 - 根因：pointerdown 无条件置 seeking=true，但 WKWebView 下点击位置换算值与当前值相同时不派发 change，标志永久不复位，timeupdate 回写被跳过
+
 - 修复：pointerup/pointercancel 无条件复位 seeking（change 仍负责跳转，职责分离）
+
 - 附注：高倍速下圆点本身存在约一个 timeupdate 间隔（约 250ms×倍速）的步进滞后，属采样固有观感非 bug
+
 - 附带：git 历史清理（剔除误入提交的 test/2.mp4 378MB），仓库推送 GitHub 成功
 
 2026-09-04 | v1.6.1 / 0028 | 修复：stream 协议路径解析 / 切视频倍速恢复 | Rust + 前端

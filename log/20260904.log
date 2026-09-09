@@ -11,3 +11,7 @@
 [14:43] 完成：GitHub 推送成功（历史已清理），删除 backup 分支并 gc 回收空间
 [17:25] 进行：v1.6.2 修复——进度条圆点卡死（seeking 标志在无变化点击时不复位，timeupdate 永久停写）
 [17:27] 完成：编译归档 0029-20260904-playerWCY（app）
+[17:27] 完成：v1.6.2 修复——编译归档 0029-20260904-playerWCY（app）
+[13:34] 进行：Android 版探针阶段（方案C）——平台隔离改造 + android init + 空工程 + SAF/播放探针
+[15:28] 进行：Android构建排障——WS连接拒绝，改装 Rust 版 tauri-cli 重试
+[15:40] 完成：Android 探针里程碑1——v1.6.2 debug APK 构建成功（arm64），归档 0030-20260908-playerWCY-debug.apk，待真机安装

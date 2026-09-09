@@ -1,12 +1,13 @@
 {
   "name": "playerwcy",
   "private": true,
-  "version": "1.6.2",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
-    "release": "tauri build && bash scripts/archive.sh"
+    "release": "tauri build && bash scripts/archive.sh",
+    "tauri": "tauri"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"

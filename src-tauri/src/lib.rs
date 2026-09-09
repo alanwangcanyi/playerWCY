@@ -3,16 +3,23 @@ mod commands;
 mod db;
 mod folder;
 mod media_proto;
+// 系统音量模块仅 macOS：Android 的 WebView 音量天然走系统媒体流，无需双向同步
+#[cfg(target_os = "macos")]
 mod volume;
 
 use std::sync::Mutex;
-use tauri::{Emitter, Manager};
+use tauri::Manager;
+// Emitter 仅 macOS 使用（Finder 双击打开事件 emit）
+#[cfg(target_os = "macos")]
+use tauri::Emitter;
 
 /// 全局共享状态：SQLite 连接（Mutex 保证多线程安全）
 pub struct AppState {
     pub db: Mutex<rusqlite::Connection>,
 }
 
+// mobile_entry_point：Android/iOS 的原生入口宏（wry 通过 JNI 调用该符号启动应用）
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -25,7 +32,8 @@ pub fn run() {
             app.manage(AppState {
                 db: Mutex::new(conn),
             });
-            // 启动系统音量监听（音量条与系统音量双向同步）
+            // 启动系统音量监听（音量条与系统音量双向同步；Android 无此机制）
+            #[cfg(target_os = "macos")]
             volume::start_listener(app.handle().clone());
             Ok(())
         })

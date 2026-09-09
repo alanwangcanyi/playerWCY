@@ -64,6 +64,10 @@
               <svg viewBox="0 0 24 24"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
             </button>
             <button id="btn-mode" title="点击切换播放模式：播完下集 → 列表循环 → 单集循环 → 播完暂停"></button>
+            <!-- Android 专属：横屏方向反转（landscape 0°/180° 手动切换，不随重力） -->
+            <button id="btn-rotate" hidden title="反转横屏方向">
+              <svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            </button>
           </div>
           <div class="btn-group speed-group">
             <label class="hotkeys-toggle" title="倍速快捷键开关（数字键 1-5）">

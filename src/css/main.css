@@ -303,6 +303,10 @@ body {
 /* 未勾选时整条隐藏（防 flex 覆盖 hidden 属性，同 open-actions 的坑） */
 .sel-bar[hidden] { display: none !important; }
 .sel-bar button { flex: 1; }
+/* E1（Android）：取消按钮宽度收窄至原来的 60%（原与删除平分各 50%），并紧凑化降低高度 */
+.android .sel-bar #btn-cancel-sel { flex: 0.43; }
+.android .sel-bar { padding: 6px 10px; }
+.android .sel-bar button { padding: 5px 10px; font-size: 13px; }
 .sel-bar .danger { color: #ff8a80; border-color: rgba(232, 70, 58, 0.4); }
 .sel-bar .danger:hover {
   background: rgba(232, 70, 58, 0.14);

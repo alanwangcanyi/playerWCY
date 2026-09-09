@@ -10,7 +10,10 @@ import { initKeyboard } from './keyboard.js';
 /* ---- Android 平台标记：必须在 initPlayer/initSidebar 之前设置 ----
  *  （sidebar.js 初始化时按此 flag 注册 SAF 回调与启动恢复，晚了会整段跳过） */
 const IS_ANDROID = /android/i.test(navigator.userAgent) && !!window.NativeBridge;
-if (IS_ANDROID) window.__PW_ANDROID = true;
+if (IS_ANDROID) {
+  window.__PW_ANDROID = true;
+  document.body.classList.add('android'); // 平台 CSS 钩子（A1-A5 样式均挂此类）
+}
 
 const ctx = {
   groups: [],
@@ -46,7 +49,8 @@ btnToggle.addEventListener('click', () => {
 });
 applySidebar(localStorage.getItem('pwcy-sidebar-hidden') === '1');
 
-/* ---- 倍速快捷键开关（数字键 1-5；状态记忆；关闭时角标变暗） ---- */
+/* ---- 倍速快捷键开关（数字键 1-5；状态记忆；关闭时角标变暗） ----
+ *  Android：无键盘，默认关闭且隐藏开关（A2） */
 const hotkeysToggle = document.getElementById('rate-hotkeys');
 const speedGroup = document.querySelector('.speed-group');
 function applyRateHotkeys(on) {
@@ -54,8 +58,17 @@ function applyRateHotkeys(on) {
   speedGroup.classList.toggle('no-hotkeys', !on);
 }
 hotkeysToggle.addEventListener('change', () => applyRateHotkeys(hotkeysToggle.checked));
-hotkeysToggle.checked = localStorage.getItem('pwcy-rate-hotkeys') !== '0';
+const savedHotkeys = localStorage.getItem('pwcy-rate-hotkeys');
+hotkeysToggle.checked = savedHotkeys !== null ? savedHotkeys !== '0' : !IS_ANDROID;
 speedGroup.classList.toggle('no-hotkeys', !hotkeysToggle.checked);
+
+/* ---- Android A5：点击视频区域隐藏/恢复控制栏（沉浸模式，播放不中断） ---- */
+if (IS_ANDROID) {
+  const controls = document.getElementById('controls');
+  document.getElementById('video-wrap').addEventListener('click', () => {
+    controls.classList.toggle('hidden-controls');
+  });
+}
 
 /* ---- Android 专属：横屏方向反转（MainActivity 注入的 NativeBridge 桥，不随重力） ---- */
 const btnRotate = document.getElementById('btn-rotate');

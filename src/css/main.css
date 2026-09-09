@@ -571,6 +571,37 @@ button svg,
 #rate-input:focus { outline: none; border-color: var(--brand); }
 #rate-input.current { border-color: var(--brand); color: var(--brand); }
 
+/* ===== Android 平台专属（body.android） ===== */
+/* A1：入口按钮下移避让 edge-to-edge 状态栏 */
+.android .open-actions { margin-top: 44px; }
+/* A2：隐藏倍速快捷键开关（Android 无键盘） */
+.android .hotkeys-toggle { display: none; }
+/* A3：隐藏倍速按钮/输入框的快捷键角标（1-5） */
+.android .btn-rate kbd,
+.android .rate-input-wrap kbd { display: none; }
+/* A4：播放模式按钮只留图标（隐藏文字） */
+.android #btn-mode span { display: none; }
+/* A5：沉浸模式隐藏控制栏（点击视频区切换） */
+#controls.hidden-controls { display: none !important; }
+
+/* A4：模式切换半透明 toast（自动淡出，非模态） */
+.mode-toast {
+  position: fixed;
+  left: 50%;
+  top: 22%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 15px;
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.mode-toast.show { opacity: 1; }
+
 /* ===== 应用内弹窗（替代原生 alert/confirm，样式与整体 UI 统一） ===== */
 .app-dialog-overlay {
   position: fixed;

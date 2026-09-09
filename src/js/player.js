@@ -47,10 +47,28 @@ export function initPlayer(ctx) {
     btnMode.innerHTML = m.icon + '<span>' + m.label + '</span>';
   };
   updateModeBtn();
+
+  /* Android A4：模式切换半透明 toast（自动消失）；桌面端不变 */
+  let toastEl = null;
+  let toastTimer = null;
+  function modeToast(label) {
+    if (!window.__PW_ANDROID) return;
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'mode-toast';
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = '播放模式：' + label;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
+  }
+
   btnMode.addEventListener('click', () => {
     modeIdx = (modeIdx + 1) % MODES.length;
     localStorage.setItem('pwcy-mode', MODES[modeIdx].key);
     updateModeBtn();
+    modeToast(MODES[modeIdx].label);
   });
 
   /* ---- 倍速记忆：恢复上次调整的倍速（换源后 loadedmetadata 重应用） ---- */

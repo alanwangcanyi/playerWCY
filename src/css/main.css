@@ -591,9 +591,10 @@ button svg,
 /* B3：快退/快进按钮只留图标（去掉 5s 字样） */
 .android #btn-back span,
 .android #btn-fwd span { display: none; }
-/* B4：控制栏按钮单排化 + 紧凑化（Android 隐藏项多，一排可容纳） */
+/* B4：控制栏按钮单排化 + 紧凑化（Android 隐藏项多，一排可容纳）
+ * 左右加大边距：手机屏幕左右下角有弧度（曲面/圆角），避免挡住两端按钮 */
 .android #btn-row { flex-wrap: nowrap; }
-.android #controls { padding: 6px 10px 8px; }
+.android #controls { padding: 6px 30px 8px; }
 .android #btn-row { margin-top: 6px; gap: 6px; }
 .android .btn-group { gap: 5px; }
 .android #btn-row button { padding: 5px 9px; font-size: 12px; }

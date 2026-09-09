@@ -7,5 +7,6 @@ src-tauri/gen/schemas/
 20260901-playerWCY-archive/
 # 本地测试媒体文件（曾致 378MB 文件入历史被 GitHub 拒推，勿入库）
 test/
-# 误克隆的远程仓库副本（GitHub Desktop Clone 产生），待手动删除
-playerWCY/
+# 误克隆的远程仓库副本（GitHub Desktop Clone 产生），仅匹配项目根目录；
+# 勿写成裸 playerWCY/ ——大小写不敏感会把 Android 源码目录 com/wcy/playerwcy/ 也忽略掉
+/playerWCY/

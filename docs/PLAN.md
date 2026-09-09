@@ -26,9 +26,9 @@
 | 6 | 统一图标（cargo tauri icon 同源） | 已完成 | 与 macOS 一致 |
 | 7 | SAF 探针：选目录 + 持久授权 + 列视频 | 已完成 | takePersistableUriPermission 验证通过 |
 | 8 | SAF 探针：content URI 直接播放 | 已完成 | **结论：WebView video 不支持 content://（失败，符合预期）** |
-| 9 | SAF 探针：复制缓存 + stream 协议播放验证 | 进行中 | 阶段打点版已装机，等真机弹窗序列反馈定位断点 |
-| 10 | 【验收关卡 1】SAF 链路判定（9 通过 → 复制缓存方案；否则 Kotlin HTTP 代理/Media3） | 未开始 | 依赖 #9 结果 |
-| 11 | SAF 正式接入：目录持久化、列表写入 SQLite、ctx.groups、renderList、播放走复制+stream | 未开始 | 方案依赖 #10 |
+| 9 | SAF 探针：复制缓存 + stream 协议播放验证 | 已完成 | **结论：失败——Android WebView 媒体请求绕过 shouldInterceptRequest（wry 协议挂载点），自定义协议无法喂 video（CDP Network 证实请求未发出，error code=4）** |
+| 10 | 【验收关卡 1】SAF/播放链路判定 | 已完成 | **判定：stream 协议路线不可行；推荐方案 A（Kotlin 本地 HTTP 服务，NanoHTTPD，直接桥 ContentResolver 流，支持 Range，无需复制）** |
+| 11 | 正式接入：Kotlin HTTP 服务 + SAF 目录持久化 + 列表写入 SQLite + ctx.groups/renderList + videoApi.load | 未开始 | 方案 A |
 | 12 | 【验收关卡 2】播放探针：moov 尾部大文件、拖进度、切后台恢复、倍速 | 未开始 | |
 | 13 | 移动端 UI 适配：媒体库页→播放页、长按菜单、底部控制、触摸目标、安全区 | 未开始 | 总监评审第 3 条 |
 | 14 | release APK 签名 + 版本号 versionCode + 归档规则扩展 | 未开始 | |

@@ -69,6 +69,20 @@ if (IS_ANDROID) {
   document.getElementById('video-wrap').addEventListener('click', () => {
     controls.classList.toggle('hidden-controls');
   });
+
+  /* ---- Android C3：自定义倍速输入框 单击=应用、双击=编辑 ----
+   *  mousedown 阻止单击聚焦（防软键盘弹出），dblclick 才 focus 进入编辑 */
+  const rateInput = document.getElementById('rate-input');
+  rateInput.addEventListener('mousedown', (e) => {
+    if (e.detail < 2) e.preventDefault(); // 单击不聚焦
+  });
+  rateInput.addEventListener('click', (e) => {
+    if (e.detail === 1) videoApi.applyRateSlot(5); // 单击 = 应用输入框当前值
+  });
+  rateInput.addEventListener('dblclick', () => {
+    rateInput.focus();
+    rateInput.select(); // 双击进入编辑并全选，便于直接输入
+  });
 }
 
 /* ---- Android 专属：横屏方向反转（MainActivity 注入的 NativeBridge 桥，不随重力） ---- */

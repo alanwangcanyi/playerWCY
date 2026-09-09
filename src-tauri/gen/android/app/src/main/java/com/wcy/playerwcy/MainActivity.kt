@@ -104,13 +104,14 @@ class MainActivity : TauriActivity() {
   private fun treeUri(): Uri? =
     getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_TREE, null)?.let(Uri::parse)
 
-  /** 列出已选目录下的视频：[{id(docId), name, size, url(本机HTTP可播地址)}] */
+  /** 列出已选目录下的视频（按文件名小写排序，对齐 macOS folder.rs 语义）：
+   *  [{id(docId), name, size, url(本机HTTP可播地址)}] */
   private fun listVideos(): String {
     val tree = treeUri() ?: return err("尚未选择过目录")
     return try {
       val rootId = DocumentsContract.getTreeDocumentId(tree)
       val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(tree, rootId)
-      val arr = JSONArray()
+      val found = mutableListOf<Triple<String, String, Long>>() // (docId, name, size)
       contentResolver.query(
         childrenUri,
         arrayOf(
@@ -126,17 +127,22 @@ class MainActivity : TauriActivity() {
           val size = c.getLong(2)
           val ext = name.substringAfterLast('.', "").lowercase()
           if (ext in VIDEO_EXTS && size > 0) {
-            arr.put(
-              JSONObject()
-                .put("id", docId)
-                .put("name", name)
-                .put("size", size)
-                .put("url", "http://127.0.0.1:${MediaServer.PORT}/media/" +
-                  java.net.URLEncoder.encode(docId, "UTF-8") +
-                  "?name=" + java.net.URLEncoder.encode(name, "UTF-8"))
-            )
+            found.add(Triple(docId, name, size))
           }
         }
+      }
+      found.sortBy { it.second.lowercase() }
+      val arr = JSONArray()
+      for ((docId, name, size) in found) {
+        arr.put(
+          JSONObject()
+            .put("id", docId)
+            .put("name", name)
+            .put("size", size)
+            .put("url", "http://127.0.0.1:${MediaServer.PORT}/media/" +
+              java.net.URLEncoder.encode(docId, "UTF-8") +
+              "?name=" + java.net.URLEncoder.encode(name, "UTF-8"))
+        )
       }
       JSONObject()
         .put("ok", true).put("dir", rootId.substringAfterLast('/', ""))

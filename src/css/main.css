@@ -245,13 +245,14 @@ body {
 
 .video-item .chk {
   position: absolute;
-  left: -6px;
+  left: -1px; /* 右移 5px（原 -6px），避免贴边/被裁剪 */
   top: 50%;
   transform: translateY(-50%);
   opacity: 0;
   transition: opacity 0.12s ease;
   cursor: pointer;
   line-height: 1;
+  z-index: 5; /* 浮在其他 UI（进度条/吸顶条）之上 */
 }
 .video-item:hover .chk,
 .video-item.checked .chk { opacity: 1; }
@@ -299,6 +300,8 @@ body {
   border-top: 1px solid var(--border);
   background: var(--bg-panel);
 }
+/* 未勾选时整条隐藏（防 flex 覆盖 hidden 属性，同 open-actions 的坑） */
+.sel-bar[hidden] { display: none !important; }
 .sel-bar button { flex: 1; }
 .sel-bar .danger { color: #ff8a80; border-color: rgba(232, 70, 58, 0.4); }
 .sel-bar .danger:hover {

@@ -601,7 +601,7 @@ button svg,
 /* B4：控制栏按钮单排化 + 紧凑化（Android 隐藏项多，一排可容纳）
  * 左右加大边距（C1: 40px）：手机屏幕左右下角有弧度（曲面/圆角），避免挡住两端按钮 */
 .android #btn-row { flex-wrap: nowrap; }
-.android #controls { padding: 6px 40px 13px; } /* 底部留白 +5px（8→13），避开手机下边框弧度 */
+.android #controls { padding: 6px 40px 15px; } /* 底部留白 8→15px（累计 +7px），避开手机下边框弧度 */
 /* C2：侧栏宽度收窄至桌面的 70%（270 → 189px），横屏给视频区更多空间 */
 .android #sidebar { width: 189px; min-width: 189px; }
 .android #btn-row { margin-top: 6px; gap: 6px; }

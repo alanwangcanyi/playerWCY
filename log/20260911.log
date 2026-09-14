@@ -1,2 +1,3 @@
 [15:38] 进行：macOS 端 Liquid Glass UI 改版 v1.8.0（PLAN L1-L7，body:not(.android) 隔离，Android 零回归）
 [15:46] 完成：macOS Liquid Glass 改版 v1.8.0（L1-L7 全部完成，归档 0034，Android 零回归隔离）
+[15:59] 完成：v1.8.0 配色调整——强调色紫 #6f6fff → Apple 系统蓝 #0A84FF（23 处），玻璃底色提亮一档（--bg/--glass-* 限定 macOS），归档 0034 覆盖

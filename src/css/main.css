@@ -7,8 +7,8 @@
   --bg-hover: #2a2a36;
   --text: #e8e8ee;
   --text-dim: #9a9aa8;
-  --brand: #6f6fff;
-  --brand-weak: rgba(111, 111, 255, 0.25);
+  --brand: #0a84ff;
+  --brand-weak: rgba(10, 132, 255, 0.25);
   --border: rgba(255, 255, 255, 0.08);
   --radius: 8px;
   --radius-full: 999px;
@@ -212,7 +212,7 @@ body {
 }
 /* 单文件组徽章：品牌弱底色+品牌文字，与普通计数徽章区分 */
 .group-header .gcount.file-badge {
-  background: rgba(111, 111, 255, 0.16);
+  background: rgba(10, 132, 255, 0.16);
   color: var(--brand);
 }
 
@@ -240,8 +240,8 @@ body {
   border-radius: 2px;
   background: var(--brand);
 }
-.video-item.checked { background: rgba(111, 111, 255, 0.10); }
-.video-item.active.checked { background: rgba(111, 111, 255, 0.18); }
+.video-item.checked { background: rgba(10, 132, 255, 0.10); }
+.video-item.active.checked { background: rgba(10, 132, 255, 0.18); }
 
 .video-item .chk {
   position: absolute;
@@ -265,7 +265,7 @@ body {
   text-overflow: ellipsis;
   margin-bottom: 5px;
 }
-.video-item.active .name { color: #c9c9ff; }
+.video-item.active .name { color: #7cc0ff; }
 
 .video-item .meta {
   display: flex;
@@ -478,16 +478,16 @@ button svg,
   color: #fff;
 }
 #btn-play:hover {
-  background: #8585ff;
-  border-color: #8585ff;
+  background: #3395ff;
+  border-color: #3395ff;
 }
-#btn-play:active { background: #5c5ce6; }
+#btn-play:active { background: #0071e3; }
 
 /* 倍速预设按钮：当前生效档位高亮 */
 .btn-rate.active {
   color: var(--brand);
   border-color: var(--brand);
-  background: rgba(111, 111, 255, 0.12);
+  background: rgba(10, 132, 255, 0.12);
 }
 
 .speed-group .label, .volume-group .label { font-size: 12px; color: var(--text-dim); }
@@ -519,7 +519,7 @@ button svg,
   transition: transform 0.15s ease, background 0.15s ease;
 }
 .hotkeys-toggle input:checked + .tg-track {
-  background: rgba(111, 111, 255, 0.45);
+  background: rgba(10, 132, 255, 0.45);
   border-color: var(--brand);
 }
 .hotkeys-toggle input:checked + .tg-track .tg-knob {
@@ -675,7 +675,7 @@ button svg,
   border-color: var(--brand);
   color: #fff;
 }
-.app-dialog-btn.primary:hover { background: #8585ff; border-color: #8585ff; }
+.app-dialog-btn.primary:hover { background: #3395ff; border-color: #3395ff; }
 .app-dialog-btn.danger {
   color: #ff8a80;
   border-color: rgba(232, 70, 58, 0.4);
@@ -695,8 +695,8 @@ button svg,
 /* ----- L1 玻璃材质变量 + 全局基调 ----- */
 body:not(.android) {
   /* 玻璃三件套：底色（半透明深色）/ 折射（模糊+饱和度放大）/ 高光边缘 */
-  --glass-bg: rgba(24, 24, 34, 0.58);
-  --glass-bg-strong: rgba(20, 20, 30, 0.75);
+  --glass-bg: rgba(40, 40, 56, 0.50);
+  --glass-bg-strong: rgba(36, 36, 52, 0.66);
   --glass-blur: saturate(170%) blur(28px);
   --glass-blur-strong: saturate(180%) blur(40px);
   --glass-border: rgba(255, 255, 255, 0.10);
@@ -704,6 +704,7 @@ body:not(.android) {
   --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   --ease-liquid: cubic-bezier(0.34, 1.56, 0.64, 1); /* 液态回弹曲线 */
   --radius: 10px; /* 圆角体系整体放大（Android 仍继承 :root 的 8px） */
+  --bg: #181822; /* 窗口底色提亮一档（Android 仍继承 :root 旧值） */
   font-family: -apple-system, "SF Pro Text", "PingFang SC", system-ui, sans-serif;
   letter-spacing: 0.01em;
 }
@@ -734,13 +735,13 @@ body:not(.android) #sidebar {
 }
 /* 吸顶条：原不透明底在玻璃侧栏上突兀，改半透明玻璃 */
 body:not(.android) .sticky-ghost {
-  background: rgba(24, 24, 34, 0.85);
+  background: rgba(38, 38, 54, 0.78);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
 }
 /* 底部多选操作条同步玻璃化 */
 body:not(.android) .sel-bar {
-  background: rgba(24, 24, 34, 0.85);
+  background: rgba(38, 38, 54, 0.78);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--glass-border);
@@ -772,27 +773,27 @@ body:not(.android) button:active {
 body:not(.android) #btn-play {
   background: var(--brand);
   border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 4px 18px rgba(111, 111, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 4px 18px rgba(10, 132, 255, 0.45);
 }
 body:not(.android) #btn-play:hover {
-  background: #8585ff;
+  background: #3395ff;
   transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 6px 24px rgba(111, 111, 255, 0.60);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 6px 24px rgba(10, 132, 255, 0.60);
 }
 body:not(.android) #btn-play:active {
   transform: scale(0.93);
-  background: #5c5ce6;
+  background: #0071e3;
 }
 /* 侧栏主入口：品牌色光晕同步 */
 body:not(.android) #btn-open-folder {
   border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 4px 16px rgba(111, 111, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 4px 16px rgba(10, 132, 255, 0.35);
 }
 /* 倍速当前档位：品牌色玻璃 */
 body:not(.android) .btn-rate.active {
-  background: rgba(111, 111, 255, 0.16);
-  border-color: rgba(111, 111, 255, 0.55);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 12px rgba(111, 111, 255, 0.25);
+  background: rgba(10, 132, 255, 0.16);
+  border-color: rgba(10, 132, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 12px rgba(10, 132, 255, 0.25);
 }
 /* 倍速输入框：玻璃凹槽 */
 body:not(.android) #rate-input {
@@ -811,10 +812,10 @@ body:not(.android) .rate-input-wrap kbd {
 body:not(.android) .video-item { border-radius: 10px; transition: background 0.15s ease; }
 body:not(.android) .video-item:hover { background: rgba(255, 255, 255, 0.07); }
 body:not(.android) .video-item.active {
-  background: rgba(111, 111, 255, 0.16);
+  background: rgba(10, 132, 255, 0.16);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
-body:not(.android) .video-item.checked { background: rgba(111, 111, 255, 0.10); }
+body:not(.android) .video-item.checked { background: rgba(10, 132, 255, 0.10); }
 body:not(.android) .group-header:hover { background: rgba(255, 255, 255, 0.06); }
 
 /* ----- L5 进度/音量条：玻璃轨道 + 白色玻璃球滑块 ----- */
@@ -865,7 +866,7 @@ body:not(.android) .app-dialog {
 
 /* 模式切换 toast：玻璃胶囊 */
 body:not(.android) .mode-toast {
-  background: rgba(24, 24, 34, 0.65);
+  background: rgba(38, 38, 54, 0.58);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);

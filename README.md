@@ -31,7 +31,7 @@ playerWCY/
 │   └── CHANGELOG.md             变更记录（每次修改追加一条）
 ├── src/                         前端（Web，无框架）
 │   ├── index.html               界面结构：侧边栏 + 播放区 + 控制栏
-│   ├── css/main.css             全部样式（深色主题）
+│   ├── css/main.css             全部样式（深色主题；macOS 端 Liquid Glass 液态玻璃）
 │   └── js/
 │       ├── main.js              入口：组装三个模块
 │       ├── sidebar.js           打开文件夹 → 视频清单渲染（名称 + 播放百分比进度条）

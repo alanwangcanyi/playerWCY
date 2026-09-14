@@ -4,6 +4,19 @@
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
+2026-09-11 | v1.8.0 / 0034 | 新增：macOS 端 Liquid Glass 液态玻璃主题 | 前端（仅 macOS）
+
+- 设计语言：Apple Liquid Glass（iOS 26 / macOS Tahoe），全部样式集中在 main.css 新增"Liquid Glass（macOS 专属）"区块
+- 平台隔离：所有选择器带 `body:not(.android)` 前缀，Android 端（body 带 .android 类）完全不匹配、零回归；圆角变量在 body 上重定义（Android 仍继承 :root 旧值）
+- 控制栏：由贴底固定改为悬浮玻璃胶囊条叠于视频画面上方（#main 加 position:relative，控制栏 absolute），backdrop-filter 实时折射视频背景 + 顶部内高光线 + 大圆角 + 深投影
+- 侧栏/吸顶条/多选操作条：半透明玻璃材质 + 饱和度增强模糊
+- 按钮体系：胶囊圆角 + 顶部内高光 + hover 微浮 + active 液态回弹（弹性曲线 cubic-bezier(.34,1.56,.64,1)）；播放主按钮品牌色光晕
+- 进度/音量条：轨道内凹阴影 + 白色玻璃球滑块（radial-gradient 球面高光）
+- 浮层：右键菜单/应用内弹窗/模式 toast/错误层统一玻璃卡片；收侧栏按钮玻璃化但刻意不加 backdrop-filter（规避 WKWebView video 合成层层遮挡问题，见 main.css 注释）
+- 字体栈优先 -apple-system（SF Pro），圆角体系 8→10px
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+
 2026-09-09 | v1.7.1 / 0033 | 新增：Android 正式播放链路（方案 A） | Android + 前端
 
 - MediaServer.kt：纯 Kotlin 手写本地 HTTP 服务（127.0.0.1:18899），SAF content:// 文档 → video 回环供流，完整 Range/206（start-end/start-/suffix，对齐 Rust media_proto 语义）；零外部依赖（NanoHTTPD 依赖在本环境不进 Kotlin classpath，模块依赖与 libs jar 均失效，已记录）

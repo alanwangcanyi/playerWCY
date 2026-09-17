@@ -96,6 +96,7 @@ bash scripts/gen_icons.sh   # 重新生成图标（改图标设计时用）
 | 音量条 = 系统音量（双向同步）          | src-tauri/src/volume.rs（CoreAudio 读写/监听）↔ src/js/player.js |
 | 倍速记忆（调整后保存）               | src/js/player.js（localStorage，换源后自动重应用）                    |
 | 界面操作按钮                    | src/index.html + src/js/player.js                          |
+| macOS 控制栏布局与错误提示          | src/css/main.css（玻璃控制栏保留文档流占位，不遮挡视频；错误层由 hidden 状态控制） |
 
 ## 数据文件位置
 

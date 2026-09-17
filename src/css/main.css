@@ -382,13 +382,14 @@ body {
   padding: 20px;
   text-align: center;
 }
+body:not(.android) #error-tip[hidden] { display: none !important; }
 #error-tip #error-msg {
   font-size: 15px;
   word-break: break-all;
   max-width: 80%;
 }
 #error-tip .tip-keys { font-size: 12px; opacity: 0.75; color: var(--text-dim); }
-#video-wrap.playing #error-tip { display: none; }
+.android #video-wrap.playing #error-tip { display: none; }
 
 /* ===== 控制栏 ===== */
 #controls {
@@ -709,13 +710,10 @@ body:not(.android) {
   letter-spacing: 0.01em;
 }
 
-/* ----- L2 控制栏：悬浮玻璃胶囊条（叠在视频画面上方，实时折射背景） ----- */
-body:not(.android) #main { position: relative; }
+/* ----- L2 控制栏：底部玻璃胶囊条（保留文档流占位，不遮挡视频画面） ----- */
 body:not(.android) #controls {
-  position: absolute; /* 脱离文档流悬浮于视频底部，任何窗口尺寸下完整可见 */
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
+  position: relative;
+  margin: 0 14px 14px;
   z-index: 10;
   border: 1px solid var(--glass-border); /* 简写同时清掉原 border-top */
   border-radius: 20px;
